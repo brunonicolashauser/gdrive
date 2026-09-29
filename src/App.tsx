@@ -117,7 +117,7 @@ export default function App() {
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-slate-950 rounded-b-2xl z-50" />
             <Header viewMode={viewMode} setViewMode={setViewMode} cartCount={cart.length} onCartClick={() => setShowCart(true)} />
             <div className="flex-1 overflow-y-auto pb-20 scrollbar-hide">
-              <ModuleRenderer module={activeModule} cart={cart} setCart={setCart} />
+              <ModuleRenderer module={activeModule} cart={cart} setCart={setCart} setActive={setActiveModule} />
             </div>
             <BottomNav active={activeModule} setActive={setActiveModule} modules={modules} />
           </div>
@@ -126,7 +126,7 @@ export default function App() {
         <div className="flex min-h-screen">
           <DesktopSidebar active={activeModule} setActive={setActiveModule} modules={modules} viewMode={viewMode} setViewMode={setViewMode} cartCount={cart.length} onCartClick={() => setShowCart(true)} />
           <div className="flex-1 overflow-y-auto bg-slate-950">
-            <ModuleRenderer module={activeModule} cart={cart} setCart={setCart} />
+            <ModuleRenderer module={activeModule} cart={cart} setCart={setCart} setActive={setActiveModule} />
           </div>
         </div>
       )}
@@ -215,15 +215,15 @@ function BottomNav({ active, setActive, modules }: any) {
 }
 
 // ==================== MODULE RENDERER ====================
-function ModuleRenderer({ module, cart, setCart }: any) {
+function ModuleRenderer({ module, cart, setCart, setActive }: any) {
   switch (module) {
-    case 'inicio': return <InicioModule setActive={() => {}} />;
+    case 'inicio': return <InicioModule setActive={setActive} />;
     case 'clima': return <ClimaModule />;
     case 'convertidor': return <ConversorModule />;
     case 'catalogo': return <CatalogoModule cart={cart} setCart={setCart} />;
     case 'taller': return <TallerModule />;
     case 'admin': return <AdminModule />;
-    default: return <InicioModule setActive={() => {}} />;
+    default: return <InicioModule setActive={setActive} />;
   }
 }
 
@@ -245,10 +245,10 @@ function InicioModule({ setActive }: any) {
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        <QuickCard icon={CloudRain} title="Clima & Mareas" subtitle="SHOA / DIRECTEMAR" color="cyan" />
-        <QuickCard icon={Gauge} title="Conversor KT" subtitle="Nudos & Brújula" color="emerald" />
-        <QuickCard icon={Package} title="Catálogo" subtitle="Equipos & Arriendo" color="amber" />
-        <QuickCard icon={Wrench} title="Taller" subtitle="Prueba Hidrostática" color="rose" />
+        <QuickCard icon={CloudRain} title="Clima & Mareas" subtitle="SHOA / DIRECTEMAR" color="cyan" onClick={() => setActive('clima')} />
+        <QuickCard icon={Gauge} title="Conversor KT" subtitle="Nudos & Brújula" color="emerald" onClick={() => setActive('convertidor')} />
+        <QuickCard icon={Package} title="Catálogo" subtitle="Equipos & Arriendo" color="amber" onClick={() => setActive('catalogo')} />
+        <QuickCard icon={Wrench} title="Taller" subtitle="Prueba Hidrostática" color="rose" onClick={() => setActive('taller')} />
       </div>
 
       <div className="bg-slate-800/50 rounded-2xl p-4 border border-slate-700">
@@ -279,7 +279,7 @@ function InicioModule({ setActive }: any) {
   );
 }
 
-function QuickCard({ icon: Icon, title, subtitle, color }: any) {
+function QuickCard({ icon: Icon, title, subtitle, color, onClick }: any) {
   const colors: any = {
     cyan: 'from-cyan-500/20 to-cyan-500/5 border-cyan-500/20 text-cyan-400',
     emerald: 'from-emerald-500/20 to-emerald-500/5 border-emerald-500/20 text-emerald-400',
@@ -287,7 +287,7 @@ function QuickCard({ icon: Icon, title, subtitle, color }: any) {
     rose: 'from-rose-500/20 to-rose-500/5 border-rose-500/20 text-rose-400',
   };
   return (
-    <div className={`bg-gradient-to-br ${colors[color]} rounded-xl p-4 border cursor-pointer hover:scale-[1.02] transition-transform`}>
+    <div onClick={onClick} className={`bg-gradient-to-br ${colors[color]} rounded-xl p-4 border cursor-pointer hover:scale-[1.02] transition-transform active:scale-95`}>
       <Icon size={20} className="mb-2" />
       <p className="text-xs font-semibold text-white">{title}</p>
       <p className="text-[10px] text-slate-400">{subtitle}</p>
