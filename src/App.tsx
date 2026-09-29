@@ -99,6 +99,7 @@ export default function App() {
   const [activeModule, setActiveModule] = useState('inicio');
   const [cart, setCart] = useState<any[]>([]);
   const [showCart, setShowCart] = useState(false);
+  const [showSplash, setShowSplash] = useState(true);
 
   const modules = [
     { id: 'inicio', nombre: 'Inicio', icon: Home },
@@ -108,6 +109,10 @@ export default function App() {
     { id: 'taller', nombre: 'Taller', icon: Wrench },
     { id: 'admin', nombre: 'Admin', icon: Settings },
   ];
+
+  if (showSplash) {
+    return <SplashScreen viewMode={viewMode} setViewMode={setViewMode} onEnter={() => setShowSplash(false)} />;
+  }
 
   return (
     <div className="min-h-screen bg-slate-950 font-[Inter] text-white">
@@ -131,6 +136,163 @@ export default function App() {
         </div>
       )}
       {showCart && <CartModal cart={cart} setCart={setCart} onClose={() => setShowCart(false)} />}
+    </div>
+  );
+}
+
+// ==================== SPLASH SCREEN ====================
+function SplashScreen({ viewMode, setViewMode, onEnter }: any) {
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleEnter = () => {
+    setIsLoading(true);
+    setTimeout(() => {
+      onEnter();
+    }, 800);
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-950 font-[Inter] text-white relative overflow-hidden flex items-center justify-center">
+      {/* Animated Background */}
+      <div className="absolute inset-0">
+        {/* Gradient overlays */}
+        <div className="absolute inset-0 bg-gradient-to-b from-cyan-950/20 via-slate-950 to-slate-950" />
+        <div className="absolute top-0 left-0 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-0 right-0 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+        
+        {/* Animated waves */}
+        <div className="absolute bottom-0 left-0 right-0 h-64 opacity-20">
+          <svg className="absolute bottom-0 w-full h-32 animate-wave" viewBox="0 0 1200 120" preserveAspectRatio="none">
+            <path d="M0,60 C150,90 350,30 500,60 C650,90 850,30 1000,60 C1150,90 1200,60 1200,60 L1200,120 L0,120 Z" fill="url(#wave-gradient-1)" />
+          </svg>
+          <svg className="absolute bottom-0 w-full h-24 animate-wave-slow" viewBox="0 0 1200 120" preserveAspectRatio="none">
+            <path d="M0,80 C200,50 400,110 600,80 C800,50 1000,110 1200,80 L1200,120 L0,120 Z" fill="url(#wave-gradient-2)" />
+          </svg>
+          <defs>
+            <linearGradient id="wave-gradient-1" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#22d3ee" />
+              <stop offset="100%" stopColor="#34d399" />
+            </linearGradient>
+            <linearGradient id="wave-gradient-2" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#34d399" />
+              <stop offset="100%" stopColor="#22d3ee" />
+            </linearGradient>
+          </defs>
+        </div>
+
+        {/* Floating particles */}
+        <div className="absolute inset-0">
+          {[...Array(20)].map((_, i) => (
+            <div
+              key={i}
+              className="absolute w-1 h-1 bg-cyan-400/30 rounded-full animate-float-particle"
+              style={{
+                left: `${Math.random() * 100}%`,
+                top: `${Math.random() * 100}%`,
+                animationDelay: `${Math.random() * 5}s`,
+                animationDuration: `${3 + Math.random() * 4}s`,
+              }}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* View Mode Toggle */}
+      <div className="absolute top-6 right-6 z-50">
+        <button
+          onClick={() => setViewMode(viewMode === 'mobile' ? 'desktop' : 'mobile')}
+          className="flex items-center gap-2 px-4 py-2 bg-slate-800/80 backdrop-blur-sm border border-slate-700 rounded-full hover:bg-slate-700/80 transition-all"
+        >
+          {viewMode === 'mobile' ? <Monitor size={16} className="text-cyan-400" /> : <Smartphone size={16} className="text-cyan-400" />}
+          <span className="text-xs text-slate-300">{viewMode === 'mobile' ? 'Escritorio' : 'Móvil'}</span>
+        </button>
+      </div>
+
+      {/* Main Content */}
+      <div className={`relative z-10 text-center px-6 max-w-lg transition-all duration-700 ${isLoading ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}>
+        {/* Logo Container */}
+        <div className="mb-8 relative">
+          <div className="relative inline-block">
+            {/* Glow effect */}
+            <div className="absolute inset-0 bg-gradient-to-br from-cyan-400 to-emerald-400 rounded-3xl blur-2xl opacity-30 animate-pulse" />
+            
+            {/* Logo */}
+            <div className="relative w-32 h-32 mx-auto bg-gradient-to-br from-cyan-400 via-cyan-500 to-emerald-400 rounded-3xl flex items-center justify-center shadow-2xl shadow-cyan-500/50 animate-float">
+              <Anchor size={64} className="text-slate-950" strokeWidth={2.5} />
+            </div>
+          </div>
+        </div>
+
+        {/* Title */}
+        <h1 className="text-5xl font-black mb-3 bg-gradient-to-r from-cyan-400 via-emerald-400 to-cyan-400 bg-clip-text text-transparent animate-shimmer-text">
+          GERDIVER
+        </h1>
+        
+        {/* Subtitle */}
+        <div className="flex items-center justify-center gap-2 mb-6">
+          <div className="h-px w-12 bg-gradient-to-r from-transparent to-cyan-400" />
+          <p className="text-sm font-semibold text-cyan-400 tracking-widest uppercase">Chile</p>
+          <div className="h-px w-12 bg-gradient-to-l from-transparent to-cyan-400" />
+        </div>
+
+        {/* Description */}
+        <p className="text-slate-400 text-sm mb-2 leading-relaxed">
+          Buceo Comercial & Servicios Marítimos
+        </p>
+        <p className="text-slate-500 text-xs mb-8">
+          Puerto Montt • Servicios de inmersión, acuícola-salmonero, equipos marinos y taller especializado
+        </p>
+
+        {/* Features Preview */}
+        <div className="grid grid-cols-3 gap-3 mb-8">
+          <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-3 hover:border-cyan-500/50 transition-all">
+            <CloudRain size={20} className="text-cyan-400 mx-auto mb-1" />
+            <p className="text-[10px] text-slate-400">Clima & Mareas</p>
+          </div>
+          <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-3 hover:border-emerald-500/50 transition-all">
+            <Package size={20} className="text-emerald-400 mx-auto mb-1" />
+            <p className="text-[10px] text-slate-400">Catálogo</p>
+          </div>
+          <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-3 hover:border-amber-500/50 transition-all">
+            <Wrench size={20} className="text-amber-400 mx-auto mb-1" />
+            <p className="text-[10px] text-slate-400">Taller</p>
+          </div>
+        </div>
+
+        {/* Enter Button */}
+        <button
+          onClick={handleEnter}
+          disabled={isLoading}
+          className="group relative w-full max-w-xs mx-auto"
+        >
+          <div className="absolute inset-0 bg-gradient-to-r from-cyan-400 to-emerald-400 rounded-2xl blur-lg opacity-50 group-hover:opacity-75 transition-opacity" />
+          <div className="relative flex items-center justify-center gap-3 px-8 py-4 bg-gradient-to-r from-cyan-400 to-emerald-400 text-slate-950 font-bold rounded-2xl text-lg shadow-xl group-hover:shadow-2xl group-hover:shadow-cyan-500/50 transition-all group-hover:scale-105">
+            {isLoading ? (
+              <>
+                <div className="w-5 h-5 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
+                <span>Ingresando...</span>
+              </>
+            ) : (
+              <>
+                <span>Ingresar</span>
+                <ChevronRight size={24} className="group-hover:translate-x-1 transition-transform" />
+              </>
+            )}
+          </div>
+        </button>
+
+        {/* Footer Info */}
+        <div className="mt-8 flex items-center justify-center gap-4 text-xs text-slate-500">
+          <div className="flex items-center gap-1">
+            <MapPin size={12} />
+            <span>Puerto Montt</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <Phone size={12} />
+            <span>+569 8889 2747</span>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
