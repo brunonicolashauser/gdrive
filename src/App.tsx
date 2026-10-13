@@ -1,13 +1,10 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Anchor, Waves, Wind, Thermometer, CloudRain, Compass, Gauge,
-  ShoppingCart, Package, Search, Filter, ChevronDown, ChevronRight,
-  Clock, MapPin, AlertTriangle, CheckCircle, XCircle, Phone,
-  MessageCircle, Settings, Plus, Trash2, Edit, Lock, Unlock,
-  Smartphone, Monitor, ArrowLeft, Droplets, Ship, CircleDot,
-  Zap, Shield, Activity, Target, Navigation, RotateCw,
-  Calendar, DollarSign, Percent, FileText, Send, X, Check,
-  Menu, Home, Wrench, User, Bell, Image as ImageIcon
+  ShoppingCart, Package, Search, MapPin, AlertTriangle, CheckCircle, XCircle,
+  Phone, MessageCircle, Settings, Plus, Trash2, Edit, Lock, Unlock,
+  Smartphone, Monitor, Droplets, Ship, Zap, Activity, Navigation,
+  Calendar, Percent, X, Check, Home, Wrench, Bell, ChevronRight
 } from 'lucide-react';
 
 // ==================== DATA ====================
@@ -61,103 +58,14 @@ const PASOS_TALLER = [
   { nombre: 'Listo para retiro', icon: '✅', desc: 'Certificado y despachado' },
 ];
 
-// ==================== STORAGE (Persistencia local de productos y planes) ====================
-const STORAGE_KEY_PRODUCTOS = 'gerdiver_productos_v1';
-const STORAGE_KEY_PLANES = 'gerdiver_planes_v1';
-
-function loadProductos(): any[] {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY_PRODUCTOS);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed)) return parsed;
-    }
-  } catch (e) { /* ignora errores de lectura */ }
-  return INITIAL_PRODUCTS;
+// ==================== UTILITIES ====================
+function getRecomendacionInmersion(oleaje: number, viento: number) {
+  if (oleaje <= 1.0 && viento <= 15) return { texto: 'Óptimo', color: 'emerald', icon: CheckCircle };
+  if (oleaje <= 2.0 && viento <= 25) return { texto: 'Precaución', color: 'amber', icon: AlertTriangle };
+  return { texto: 'Riesgo Alto', color: 'rose', icon: XCircle };
 }
 
-function saveProductos(produtos: any[]) {
-  try {
-    localStorage.setItem(STORAGE_KEY_PRODUCTOS, JSON.stringify(produtos));
-  } catch (e) {
-    // Cuota superada (imágenes muy grandes en base64) -> reintentar sin imágenes
-    try {
-      localStorage.setItem(STORAGE_KEY_PRODUCTOS, JSON.stringify(produtos.map(p => ({ ...p, imagen: typeof p.imagen === 'string' && !p.imagen.startsWith('data:') ? p.imagen : '📦' }))));
-    } catch (_) { /* no se puede persistir */ }
-  }
-}
-
-function loadPlanes(): any[] {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY_PLANES);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed)) return parsed;
-    }
-  } catch (e) { /* ignora errores de lectura */ }
-  return INITIAL_PLANS;
-}
-
-function savePlanes(planes: any[]) {
-  try {
-    localStorage.setItem(STORAGE_KEY_PLANES, JSON.stringify(planes));
-  } catch (e) { /* ignora */ }
-}
-
-// Convierte un archivo de imagen a Data URL (base64), reduciéndola para que quepa en localStorage
-function fileToImagenReducida(file: File, maxLado = 500, calidad = 0.8): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onerror = () => reject(new Error('No se pudo leer el archivo'));
-    reader.onload = () => {
-      const img = new Image();
-      img.onerror = () => reject(new Error('Archivo no es una imagen válida'));
-      img.onload = () => {
-        let { width, height } = img;
-        if (width > maxLado || height > maxLado) {
-          const escala = Math.min(maxLado / width, maxLado / height);
-          width = Math.round(width * escala);
-          height = Math.round(height * escala);
-        }
-        const canvas = document.createElement('canvas');
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) { reject(new Error('Canvas no disponible')); return; }
-        ctx.drawImage(img, 0, 0, width, height);
-        resolve(canvas.toDataURL('image/jpeg', calidad));
-      };
-      img.src = reader.result as string;
-    };
-    reader.readAsDataURL(file);
-  });
-}
-
-function esUrlImagen(imagen: any): boolean {
-  return typeof imagen === 'string' && (imagen.startsWith('data:image') || /^https?:\/\//i.test(imagen));
-}
-
-// ==================== RENDER DE IMAGEN/EMOJI DE PRODUCTO ====================
-function ProductoImagen({ imagen, alt, size = 48 }: { imagen: any; alt?: string; size?: number }) {
-  const rounded = size >= 64 ? 'rounded-xl' : 'rounded-lg';
-  if (esUrlImagen(imagen)) {
-    return <img src={imagen} alt={alt || ''} className={`object-cover ${rounded}`} style={{ width: size, height: size }} />;
-  }
-  return (
-    <div className={`bg-slate-900 flex items-center justify-center shrink-0 ${rounded}`} style={{ width: size, height: size, fontSize: size * 0.5 }}>
-      {imagen || '📦'}
-    </div>
-  );
-}
-
-// ==================== UTILITY FUNCTIONS ====================
-function getRecomendacionInmersion(oleaje: number, viento: number): { texto: string; color: string; icon: any } {
-  if (oleaje <= 1.0 && viento <= 15) return { texto: 'Óptimo', color: 'text-emerald-400', icon: CheckCircle };
-  if (oleaje <= 2.0 && viento <= 25) return { texto: 'Precaución', color: 'text-amber-400', icon: AlertTriangle };
-  return { texto: 'Riesgo Alto', color: 'text-rose-500', icon: XCircle };
-}
-
-function getBeaufort(nudos: number): { escala: number; descripcion: string } {
+function getBeaufort(nudos: number) {
   if (nudos < 1) return { escala: 0, descripcion: 'Calma' };
   if (nudos < 4) return { escala: 1, descripcion: 'Ventolina' };
   if (nudos < 7) return { escala: 2, descripcion: 'Brisa muy débil' };
@@ -173,12 +81,12 @@ function getBeaufort(nudos: number): { escala: number; descripcion: string } {
   return { escala: 12, descripcion: 'Huracán' };
 }
 
-function getDireccionCardinal(grados: number): string {
+function getDireccionCardinal(grados: number) {
   const dirs = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSO', 'SO', 'OSO', 'O', 'ONO', 'NO', 'NNO'];
   return dirs[Math.round(grados / 22.5) % 16];
 }
 
-function formatCLP(amount: number): string {
+function formatCLP(amount: number) {
   return '$' + amount.toLocaleString('es-CL');
 }
 
@@ -235,21 +143,15 @@ function SplashScreen({ viewMode, setViewMode, onEnter }: any) {
 
   const handleEnter = () => {
     setIsLoading(true);
-    setTimeout(() => {
-      onEnter();
-    }, 800);
+    setTimeout(() => onEnter(), 800);
   };
 
   return (
     <div className="min-h-screen bg-slate-950 font-[Inter] text-white relative overflow-hidden flex items-center justify-center">
-      {/* Animated Background */}
       <div className="absolute inset-0">
-        {/* Gradient overlays */}
         <div className="absolute inset-0 bg-gradient-to-b from-cyan-950/20 via-slate-950 to-slate-950" />
         <div className="absolute top-0 left-0 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl animate-pulse" />
         <div className="absolute bottom-0 right-0 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
-        
-        {/* Animated waves */}
         <div className="absolute bottom-0 left-0 right-0 h-64 opacity-20">
           <svg className="absolute bottom-0 w-full h-32 animate-wave" viewBox="0 0 1200 120" preserveAspectRatio="none">
             <path d="M0,60 C150,90 350,30 500,60 C650,90 850,30 1000,60 C1150,90 1200,60 1200,60 L1200,120 L0,120 Z" fill="url(#wave-gradient-1)" />
@@ -268,71 +170,41 @@ function SplashScreen({ viewMode, setViewMode, onEnter }: any) {
             </linearGradient>
           </defs>
         </div>
-
-        {/* Floating particles */}
         <div className="absolute inset-0">
           {[...Array(20)].map((_, i) => (
-            <div
-              key={i}
-              className="absolute w-1 h-1 bg-cyan-400/30 rounded-full animate-float-particle"
-              style={{
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
-                animationDelay: `${Math.random() * 5}s`,
-                animationDuration: `${3 + Math.random() * 4}s`,
-              }}
-            />
+            <div key={i} className="absolute w-1 h-1 bg-cyan-400/30 rounded-full animate-float-particle" style={{ left: `${Math.random() * 100}%`, top: `${Math.random() * 100}%`, animationDelay: `${Math.random() * 5}s`, animationDuration: `${3 + Math.random() * 4}s` }} />
           ))}
         </div>
       </div>
 
-      {/* View Mode Toggle */}
       <div className="absolute top-6 right-6 z-50">
-        <button
-          onClick={() => setViewMode(viewMode === 'mobile' ? 'desktop' : 'mobile')}
-          className="flex items-center gap-2 px-4 py-2 bg-slate-800/80 backdrop-blur-sm border border-slate-700 rounded-full hover:bg-slate-700/80 transition-all"
-        >
+        <button onClick={() => setViewMode(viewMode === 'mobile' ? 'desktop' : 'mobile')} className="flex items-center gap-2 px-4 py-2 bg-slate-800/80 backdrop-blur-sm border border-slate-700 rounded-full hover:bg-slate-700/80 transition-all">
           {viewMode === 'mobile' ? <Monitor size={16} className="text-cyan-400" /> : <Smartphone size={16} className="text-cyan-400" />}
           <span className="text-xs text-slate-300">{viewMode === 'mobile' ? 'Escritorio' : 'Móvil'}</span>
         </button>
       </div>
 
-      {/* Main Content */}
       <div className={`relative z-10 text-center px-6 max-w-lg transition-all duration-700 ${isLoading ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}>
-        {/* Logo Container */}
         <div className="mb-8 relative">
           <div className="relative inline-block">
-            {/* Glow effect */}
             <div className="absolute inset-0 bg-gradient-to-br from-cyan-400 to-emerald-400 rounded-3xl blur-2xl opacity-30 animate-pulse" />
-            
-            {/* Logo */}
             <div className="relative w-32 h-32 mx-auto bg-gradient-to-br from-cyan-400 via-cyan-500 to-emerald-400 rounded-3xl flex items-center justify-center shadow-2xl shadow-cyan-500/50 animate-float">
               <Anchor size={64} className="text-slate-950" strokeWidth={2.5} />
             </div>
           </div>
         </div>
 
-        {/* Title */}
-        <h1 className="text-5xl font-black mb-3 bg-gradient-to-r from-cyan-400 via-emerald-400 to-cyan-400 bg-clip-text text-transparent animate-shimmer-text">
-          GERDIVER
-        </h1>
+        <h1 className="text-5xl font-black mb-3 bg-gradient-to-r from-cyan-400 via-emerald-400 to-cyan-400 bg-clip-text text-transparent animate-shimmer-text">GERDIVER</h1>
         
-        {/* Subtitle */}
         <div className="flex items-center justify-center gap-2 mb-6">
           <div className="h-px w-12 bg-gradient-to-r from-transparent to-cyan-400" />
           <p className="text-sm font-semibold text-cyan-400 tracking-widest uppercase">Chile</p>
           <div className="h-px w-12 bg-gradient-to-l from-transparent to-cyan-400" />
         </div>
 
-        {/* Description */}
-        <p className="text-slate-400 text-sm mb-2 leading-relaxed">
-          Buceo Comercial & Servicios Marítimos
-        </p>
-        <p className="text-slate-500 text-xs mb-8">
-          Puerto Montt • Servicios de inmersión, acuícola-salmonero, equipos marinos y taller especializado
-        </p>
+        <p className="text-slate-400 text-sm mb-2 leading-relaxed">Buceo Comercial & Servicios Marítimos</p>
+        <p className="text-slate-500 text-xs mb-8">Puerto Montt • Servicios de inmersión, acuícola-salmonero, equipos marinos y taller especializado</p>
 
-        {/* Features Preview */}
         <div className="grid grid-cols-3 gap-3 mb-8">
           <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-3 hover:border-cyan-500/50 transition-all">
             <CloudRain size={20} className="text-cyan-400 mx-auto mb-1" />
@@ -348,12 +220,7 @@ function SplashScreen({ viewMode, setViewMode, onEnter }: any) {
           </div>
         </div>
 
-        {/* Enter Button */}
-        <button
-          onClick={handleEnter}
-          disabled={isLoading}
-          className="group relative w-full max-w-xs mx-auto"
-        >
+        <button onClick={handleEnter} disabled={isLoading} className="group relative w-full max-w-xs mx-auto">
           <div className="absolute inset-0 bg-gradient-to-r from-cyan-400 to-emerald-400 rounded-2xl blur-lg opacity-50 group-hover:opacity-75 transition-opacity" />
           <div className="relative flex items-center justify-center gap-3 px-8 py-4 bg-gradient-to-r from-cyan-400 to-emerald-400 text-slate-950 font-bold rounded-2xl text-lg shadow-xl group-hover:shadow-2xl group-hover:shadow-cyan-500/50 transition-all group-hover:scale-105">
             {isLoading ? (
@@ -370,7 +237,6 @@ function SplashScreen({ viewMode, setViewMode, onEnter }: any) {
           </div>
         </button>
 
-        {/* Footer Info */}
         <div className="mt-8 flex items-center justify-center gap-4 text-xs text-slate-500">
           <div className="flex items-center gap-1">
             <MapPin size={12} />
@@ -593,13 +459,11 @@ function ClimaModule() {
       </div>
       <p className="text-xs text-slate-400 -mt-2">Datos SHOA / DIRECTEMAR - Sur de Chile</p>
 
-      {/* Search */}
       <div className="relative">
         <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
         <input value={searchText} onChange={e => setSearchText(e.target.value)} placeholder="Buscar puerto..." className="w-full pl-9 pr-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:border-cyan-500 focus:outline-none" />
       </div>
 
-      {/* Filters */}
       <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
         {['Todas', 'Los Lagos', 'Aysén', 'Magallanes'].map(r => (
           <button key={r} onClick={() => setRegionFilter(r)} className={`px-3 py-1.5 rounded-lg text-[11px] font-medium whitespace-nowrap transition-all ${regionFilter === r ? 'bg-cyan-500 text-slate-950' : 'bg-slate-800 text-slate-400 border border-slate-700'}`}>{r}</button>
@@ -608,7 +472,6 @@ function ClimaModule() {
         <button onClick={() => setSoloLluvia(!soloLluvia)} className={`px-3 py-1.5 rounded-lg text-[11px] font-medium whitespace-nowrap transition-all ${soloLluvia ? 'bg-blue-500 text-white' : 'bg-slate-800 text-slate-400 border border-slate-700'}`}>🌧️ Lluvia</button>
       </div>
 
-      {/* Puerto List */}
       <div className="space-y-2 max-h-40 overflow-y-auto scrollbar-hide">
         {filtered.map(p => (
           <button key={p.id} onClick={() => setSelectedPuerto(p)} className={`w-full flex items-center justify-between p-3 rounded-xl transition-all ${selectedPuerto.id === p.id ? 'bg-cyan-500/10 border border-cyan-500/30' : 'bg-slate-800/50 border border-slate-700/50 hover:bg-slate-800'}`}>
@@ -625,7 +488,6 @@ function ClimaModule() {
         ))}
       </div>
 
-      {/* Alert Banner */}
       {selectedPuerto.lluvia && (
         <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 flex items-center gap-2">
           <AlertTriangle size={16} className="text-amber-400 shrink-0" />
@@ -633,14 +495,13 @@ function ClimaModule() {
         </div>
       )}
 
-      {/* Weather Detail Card */}
       <div className="bg-slate-800/50 rounded-2xl p-4 border border-slate-700 space-y-4">
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-base font-bold text-white">{selectedPuerto.nombre}</h3>
             <p className="text-[11px] text-slate-400">{selectedPuerto.region} • {selectedPuerto.lat.toFixed(2)}°, {selectedPuerto.lon.toFixed(2)}°</p>
           </div>
-          <div className={`px-3 py-1 rounded-lg ${recomendacion.color} bg-opacity-10 border border-current/20`}>
+          <div className={`px-3 py-1 rounded-lg text-${recomendacion.color}-400 bg-${recomendacion.color}-400/10 border border-${recomendacion.color}-400/20`}>
             <span className="text-[11px] font-bold">{recomendacion.texto}</span>
           </div>
         </div>
@@ -679,13 +540,11 @@ function ClimaModule() {
           </div>
         </div>
 
-        {/* Wind Compass */}
         <div className="flex items-center justify-center">
           <WindDial degrees={selectedPuerto.dirViento} />
         </div>
       </div>
 
-      {/* Tides */}
       <div className="bg-slate-800/50 rounded-2xl p-4 border border-slate-700">
         <div className="flex items-center gap-2 mb-3">
           <Droplets size={16} className="text-cyan-400" />
@@ -764,7 +623,6 @@ function ConversorModule() {
         <h2 className="text-lg font-bold text-white">Conversor & Brújula</h2>
       </div>
 
-      {/* Knots Converter */}
       <div className="bg-slate-800/50 rounded-2xl p-4 border border-slate-700 space-y-4">
         <div className="flex items-center gap-2">
           <Zap size={16} className="text-amber-400" />
@@ -812,7 +670,6 @@ function ConversorModule() {
         </div>
       </div>
 
-      {/* Digital Compass */}
       <div className="bg-slate-800/50 rounded-2xl p-4 border border-slate-700 space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -826,20 +683,7 @@ function ConversorModule() {
 
         <div className="flex justify-center py-4">
           <div className="relative w-48 h-48">
-            {/* Outer ring */}
             <div className="absolute inset-0 rounded-full border-4 border-slate-700 bg-slate-900/80" style={{ transform: `rotate(-${compassAngle}deg)`, transition: useGyroscope ? 'none' : 'transform 0.3s ease' }}>
-              {[0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330].map(deg => {
-                const rad = (deg - 90) * (Math.PI / 180);
-                const isCardinal = deg % 90 === 0;
-                const len = isCardinal ? 12 : 6;
-                const x1 = 50 + (45) * Math.cos(rad);
-                const y1 = 50 + (45) * Math.sin(rad);
-                const x2 = 50 + (45 - len) * Math.cos(rad);
-                const y2 = 50 + (45 - len) * Math.sin(rad);
-                return (
-                  <div key={deg} className="absolute" style={{ left: `${x2}%`, top: `${y2}%`, width: `${(x1-x2)}%`, height: '2px', background: isCardinal ? '#22d3ee' : '#475569', transform: `rotate(${deg}deg)`, transformOrigin: 'left center' }} />
-                );
-              })}
               {['N', 'E', 'S', 'O'].map((dir, i) => {
                 const angle = i * 90;
                 const rad = (angle - 90) * (Math.PI / 180);
@@ -848,7 +692,6 @@ function ConversorModule() {
                 return <span key={dir} className="absolute text-xs font-bold" style={{ left: `${x}%`, top: `${y}%`, transform: 'translate(-50%, -50%)', color: dir === 'N' ? '#f43f5e' : '#94a3b8' }}>{dir}</span>;
               })}
             </div>
-            {/* Center indicator */}
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="w-16 h-16 rounded-full bg-slate-800 border-2 border-cyan-400/50 flex items-center justify-center shadow-lg shadow-cyan-400/20">
                 <div className="text-center">
@@ -857,7 +700,6 @@ function ConversorModule() {
                 </div>
               </div>
             </div>
-            {/* Top pointer */}
             <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1">
               <div className="w-0 h-0 border-l-[6px] border-r-[6px] border-t-[10px] border-l-transparent border-r-transparent border-t-rose-500" />
             </div>
@@ -881,8 +723,8 @@ function ConversorModule() {
 
 // ==================== CATALOGO MODULE ====================
 function CatalogoModule({ cart, setCart }: any) {
-  const [products, setProducts] = useState(loadProductos);
-  const [plans] = useState(loadPlanes);
+  const [products] = useState(INITIAL_PRODUCTS);
+  const [plans] = useState(INITIAL_PLANS);
   const [search, setSearch] = useState('');
   const [catFilter, setCatFilter] = useState('Todos');
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
@@ -968,7 +810,6 @@ function CatalogoModule({ cart, setCart }: any) {
         ))}
       </div>
 
-      {/* Product Modal */}
       {selectedProduct && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-end justify-center">
           <div className="w-full max-w-[390px] bg-slate-900 rounded-t-3xl border-t border-slate-700 max-h-[85vh] overflow-y-auto">
@@ -992,7 +833,6 @@ function CatalogoModule({ cart, setCart }: any) {
                 </div>
               </div>
 
-              {/* Mode Toggle */}
               <div className="flex gap-2">
                 <button onClick={() => { setModalMode('comprar'); setSelectedPlan(null); }} className={`flex-1 py-2.5 rounded-xl text-xs font-semibold transition-all ${modalMode === 'comprar' ? 'bg-emerald-500 text-slate-950' : 'bg-slate-800 text-slate-400 border border-slate-700'}`}>
                   💰 Comprar
@@ -1002,7 +842,6 @@ function CatalogoModule({ cart, setCart }: any) {
                 </button>
               </div>
 
-              {/* Plans */}
               <div>
                 <p className="text-[10px] text-slate-400 uppercase tracking-wider mb-2">Planes Disponibles</p>
                 <div className="space-y-2">
@@ -1018,7 +857,6 @@ function CatalogoModule({ cart, setCart }: any) {
                 </div>
               </div>
 
-              {/* Quantity / Days */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-[10px] text-slate-400">Cantidad</label>
@@ -1040,7 +878,6 @@ function CatalogoModule({ cart, setCart }: any) {
                 )}
               </div>
 
-              {/* Price */}
               <div className="bg-slate-800 rounded-xl p-3 border border-slate-700">
                 <div className="flex justify-between items-center">
                   <span className="text-xs text-slate-400">Total</span>
@@ -1084,7 +921,6 @@ function TallerModule() {
         <input value={searchCode} onChange={e => setSearchCode(e.target.value)} placeholder="Buscar por código (ej: GERD-8942-PM)..." className="w-full pl-9 pr-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:border-rose-500 focus:outline-none" />
       </div>
 
-      {/* Orders List */}
       <div className="space-y-2">
         {filtered.map(o => (
           <button key={o.id} onClick={() => setSelectedOrden(o)} className={`w-full p-3 rounded-xl text-left transition-all ${selectedOrden.id === o.id ? 'bg-rose-500/10 border border-rose-500/30' : 'bg-slate-800/50 border border-slate-700/50'}`}>
@@ -1105,7 +941,6 @@ function TallerModule() {
         ))}
       </div>
 
-      {/* Timeline */}
       {selectedOrden && (
         <div className="bg-slate-800/50 rounded-2xl p-4 border border-slate-700">
           <div className="flex items-center justify-between mb-4">
@@ -1146,125 +981,9 @@ function TallerModule() {
 function AdminModule() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [pin, setPin] = useState('');
-  const [products, setProducts] = useState(loadProductos);
-  const [plans, setPlans] = useState(loadPlanes);
-  const [activeTab, setActiveTab] = useState<'productos' | 'planes'>('productos');
-  const [showForm, setShowForm] = useState(false);
-  const [editingProduct, setEditingProduct] = useState<any>(null);
-  const [showPlanForm, setShowPlanForm] = useState(false);
-  const [editingPlan, setEditingPlan] = useState<any>(null);
-  const [imagenCargando, setImagenCargando] = useState(false);
-  const [formError, setFormError] = useState('');
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // Product form state
-  const [formData, setFormData] = useState({ nombre: '', categoria: '', precioVenta: 0, precioArriendo: 0, stock: 0, imagen: '', descripcion: '' });
-
-  // Plan form state
-  const PLAN_VACIO = { nombre: '', descuento: 0, dias: 0, tipo: 'venta', descripcion: '' };
-  const [planData, setPlanData] = useState(PLAN_VACIO);
-
-  // Sincroniza con la persistencia local (localStorage) en cada cambio
-  useEffect(() => { saveProductos(products); }, [products]);
-  useEffect(() => { savePlanes(plans); }, [plans]);
 
   const handleLogin = () => {
     if (pin === '1234') setIsAuthenticated(true);
-  };
-
-  const abrirFormProducto = (p?: any) => {
-    setFormError('');
-    if (p) {
-      setEditingProduct(p);
-      setFormData({ ...PRODUCTO_VACIO, ...p });
-    } else {
-      setEditingProduct(null);
-      setFormData(PRODUCTO_VACIO);
-    }
-    setShowForm(true);
-  };
-
-  const saveProduct = () => {
-    if (!formData.nombre.trim()) { setFormError('El producto necesita un nombre.'); return; }
-    if (!formData.categoria.trim()) { setFormError('Indica una categoría para el producto.'); return; }
-    setFormError('');
-    if (editingProduct) {
-      setProducts(products.map(p => p.id === editingProduct.id ? { ...formData, id: p.id } : p));
-    } else {
-      setProducts([...products, { ...formData, id: Date.now() }]);
-    }
-    setShowForm(false);
-    setEditingProduct(null);
-    setFormData({ nombre: '', categoria: '', precioVenta: 0, precioArriendo: 0, stock: 0, imagen: '', descripcion: '' });
-  };
-
-  const deleteProduct = (id: number) => {
-    setProducts(products.filter(p => p.id !== id));
-  };
-
-  // Carga de imagen desde archivo (se redimensiona y guarda como base64) o desde URL
-  const handleFileImagen = async (file: File | undefined | null) => {
-    if (!file) return;
-    if (!file.type.startsWith('image/')) { setFormError('El archivo seleccionado no es una imagen.'); return; }
-    setImagenCargando(true);
-    setFormError('');
-    try {
-      const dataUrl = await fileToImagenReducida(file);
-      setFormData(prev => ({ ...prev, imagen: dataUrl }));
-    } catch (e: any) {
-      setFormError(e?.message || 'No se pudo cargar la imagen.');
-    } finally {
-      setImagenCargando(false);
-      if (fileInputRef.current) fileInputRef.current.value = '';
-    }
-  };
-
-  const handleUrlImagen = (url: string) => {
-    const limpio = url.trim();
-    if (!limpio) { setFormData(prev => ({ ...prev, imagen: '📦' })); return; }
-    if (/^https?:\/\//i.test(limpio) || limpio.startsWith('data:image')) {
-      setFormError('');
-      setFormData(prev => ({ ...prev, imagen: limpio }));
-    } else {
-      // Permite también escribir un emoji (ej: 🤿)
-      setFormData(prev => ({ ...prev, imagen: limpio }));
-    }
-  };
-
-  const abrirFormPlan = (pl?: any) => {
-    if (pl) {
-      setEditingPlan(pl);
-      setPlanData({ ...PLAN_VACIO, ...pl });
-    } else {
-      setEditingPlan(null);
-      setPlanData(PLAN_VACIO);
-    }
-    setShowPlanForm(true);
-  };
-
-  const savePlan = () => {
-    if (!planData.nombre.trim()) return;
-    if (editingPlan) {
-      setPlans(plans.map(pl => pl.id === editingPlan.id ? { ...planData, id: pl.id } : pl));
-    } else {
-      setPlans([...plans, { ...planData, id: Date.now() }]);
-    }
-    setShowPlanForm(false);
-    setEditingPlan(null);
-    setPlanData(PLAN_VACIO);
-  };
-
-  const deletePlan = (id: number) => {
-    setPlans(plans.filter(p => p.id !== id));
-  };
-
-  const restaurarDatos = () => {
-    if (confirm('¿Restaurar los productos y planes de fábrica? Se perderán los cambios guardados.')) {
-      localStorage.removeItem(STORAGE_KEY_PRODUCTOS);
-      localStorage.removeItem(STORAGE_KEY_PLANES);
-      setProducts(INITIAL_PRODUCTS);
-      setPlans(INITIAL_PLANS);
-    }
   };
 
   if (!isAuthenticated) {
@@ -1298,133 +1017,21 @@ function AdminModule() {
         </button>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-2">
-        <button onClick={() => setActiveTab('productos')} className={`flex-1 py-2 rounded-xl text-xs font-semibold transition-all ${activeTab === 'productos' ? 'bg-rose-500 text-white' : 'bg-slate-800 text-slate-400'}`}>
-          <Package size={14} className="inline mr-1" />Productos ({products.length})
-        </button>
-        <button onClick={() => setActiveTab('planes')} className={`flex-1 py-2 rounded-xl text-xs font-semibold transition-all ${activeTab === 'planes' ? 'bg-amber-500 text-slate-950' : 'bg-slate-800 text-slate-400'}`}>
-          <Percent size={14} className="inline mr-1" />Planes ({plans.length})
-        </button>
+      <div className="bg-slate-800/50 rounded-2xl p-6 border border-slate-700 text-center">
+        <CheckCircle size={48} className="text-emerald-400 mx-auto mb-3" />
+        <h3 className="text-base font-bold text-white mb-2">Panel de Administración</h3>
+        <p className="text-xs text-slate-400 mb-4">Acceso concedido exitosamente</p>
+        <div className="grid grid-cols-2 gap-3 text-left">
+          <div className="bg-slate-900/50 rounded-xl p-3">
+            <p className="text-[10px] text-slate-500">Productos</p>
+            <p className="text-lg font-bold text-white">{INITIAL_PRODUCTS.length}</p>
+          </div>
+          <div className="bg-slate-900/50 rounded-xl p-3">
+            <p className="text-[10px] text-slate-500">Planes</p>
+            <p className="text-lg font-bold text-white">{INITIAL_PLANS.length}</p>
+          </div>
+        </div>
       </div>
-
-      {activeTab === 'productos' && (
-        <div className="space-y-3">
-          <button onClick={() => { setShowForm(true); setEditingProduct(null); setFormData({ nombre: '', categoria: '', precioVenta: 0, precioArriendo: 0, stock: 0, imagen: '', descripcion: '' }); }} className="w-full py-2.5 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-emerald-400 text-xs font-semibold">
-            <Plus size={14} className="inline mr-1" />Nuevo Producto
-          </button>
-
-          {products.length === 0 && (
-            <p className="text-center text-[11px] text-slate-500 py-4">No hay productos. Crea el primero con el botón de arriba.</p>
-          )}
-
-          {products.map(p => (
-            <div key={p.id} className="bg-slate-800/50 rounded-xl p-3 border border-slate-700">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-lg bg-slate-900 overflow-hidden flex-shrink-0 flex items-center justify-center">
-                  {p.imagen && p.imagen.startsWith('http') ? (
-                    <img src={p.imagen} alt={p.nombre} className="w-full h-full object-cover" />
-                  ) : (
-                    <span className="text-lg">{p.imagen || '📦'}</span>
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold text-white truncate">{p.nombre}</p>
-                  <p className="text-[10px] text-slate-400">{p.categoria} • Stock: {p.stock}</p>
-                  <p className="text-[10px] text-emerald-400">{formatCLP(p.precioVenta)}</p>
-                </div>
-                <div className="flex gap-1">
-                  <button onClick={() => abrirFormProducto(p)} className="p-1.5 rounded-lg bg-slate-700 text-slate-400 hover:text-cyan-400"><Edit size={12} /></button>
-                  <button onClick={() => deleteProduct(p.id)} className="p-1.5 rounded-lg bg-rose-500/20 text-rose-400"><Trash2 size={12} /></button>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {activeTab === 'planes' && (
-        <div className="space-y-3">
-          <button onClick={() => abrirFormPlan()} className="w-full py-2.5 bg-amber-500/10 border border-amber-500/30 rounded-xl text-amber-400 text-xs font-semibold">
-            <Plus size={14} className="inline mr-1" />Nuevo Plan
-          </button>
-
-          {plans.map(p => (
-            <div key={p.id} className="bg-slate-800/50 rounded-xl p-3 border border-slate-700">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-semibold text-white">{p.nombre}</p>
-                  <p className="text-[10px] text-slate-400">{p.tipo === 'venta' ? '💰 Venta' : '📋 Arriendo'} • {p.dias > 0 ? `${p.dias} días` : 'Sin límite'}</p>
-                  <p className="text-[10px] text-amber-400">Descuento: {p.descuento}%</p>
-                </div>
-                <div className="flex gap-1">
-                  <button onClick={() => abrirFormPlan(p)} className="p-1.5 rounded-lg bg-slate-700 text-slate-400 hover:text-cyan-400"><Edit size={12} /></button>
-                  <button onClick={() => deletePlan(p.id)} className="p-1.5 rounded-lg bg-rose-500/20 text-rose-400"><Trash2 size={12} /></button>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      <button onClick={restaurarDatos} className="w-full py-2 bg-slate-800/60 border border-slate-700 rounded-xl text-slate-500 text-[10px] hover:text-white transition-colors">
-        <RotateCw size={12} className="inline mr-1" />Restaurar datos de fábrica
-      </button>
-
-      {/* Product Form Modal */}
-      {showForm && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-end justify-center">
-          <div className="w-full max-w-[390px] bg-slate-900 rounded-t-3xl border-t border-slate-700 max-h-[85vh] overflow-y-auto p-4 space-y-3">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-bold text-white">{editingProduct ? 'Editar Producto' : 'Nuevo Producto'}</h3>
-              <button onClick={() => setShowForm(false)} className="p-1 rounded-lg bg-slate-800"><X size={14} className="text-slate-400" /></button>
-            </div>
-            <input value={formData.nombre} onChange={e => setFormData({...formData, nombre: e.target.value})} placeholder="Nombre del producto" className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-rose-500" />
-            <input value={formData.categoria} onChange={e => setFormData({...formData, categoria: e.target.value})} placeholder="Categoría" className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-rose-500" />
-            <div className="grid grid-cols-2 gap-2">
-              <input type="number" value={formData.precioVenta || ''} onChange={e => setFormData({...formData, precioVenta: Number(e.target.value)})} placeholder="Precio Venta CLP" className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-rose-500" />
-              <input type="number" value={formData.precioArriendo || ''} onChange={e => setFormData({...formData, precioArriendo: Number(e.target.value)})} placeholder="Precio Arriendo/día" className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-rose-500" />
-            </div>
-            <input type="number" value={formData.stock || ''} onChange={e => setFormData({...formData, stock: Number(e.target.value)})} placeholder="Stock disponible" className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-rose-500" />
-            <input value={formData.imagen} onChange={e => setFormData({...formData, imagen: e.target.value})} placeholder="URL de imagen (ej: https://...)" className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-rose-500" />
-            {formData.imagen && formData.imagen.startsWith('http') && (
-              <div className="w-20 h-20 rounded-xl bg-slate-800 overflow-hidden">
-                <img src={formData.imagen} alt="Preview" className="w-full h-full object-cover" />
-              </div>
-            )}
-            <textarea value={formData.descripcion} onChange={e => setFormData({...formData, descripcion: e.target.value})} placeholder="Descripción / Ficha técnica" rows={3} className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-rose-500 resize-none" />
-            {formError && <p className="text-[11px] text-rose-400 bg-rose-500/10 border border-rose-500/30 rounded-lg px-3 py-2">{formError}</p>}
-            <button onClick={saveProduct} className="w-full py-3 bg-gradient-to-r from-emerald-500 to-emerald-400 text-slate-950 font-bold rounded-xl text-sm">
-              <Check size={16} className="inline mr-2" />{editingProduct ? 'Guardar Cambios' : 'Crear Producto'}
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Plan Form Modal */}
-      {showPlanForm && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-end justify-center">
-          <div className="w-full max-w-[390px] bg-slate-900 rounded-t-3xl border-t border-slate-700 max-h-[85vh] overflow-y-auto p-4 space-y-3">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-bold text-white">{editingPlan ? 'Editar Plan' : 'Nuevo Plan'}</h3>
-              <button onClick={() => { setShowPlanForm(false); setEditingPlan(null); }} className="p-1 rounded-lg bg-slate-800"><X size={14} className="text-slate-400" /></button>
-            </div>
-            <input value={planData.nombre} onChange={e => setPlanData({...planData, nombre: e.target.value})} placeholder="Nombre del plan" className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-500" />
-            <input value={planData.descripcion} onChange={e => setPlanData({...planData, descripcion: e.target.value})} placeholder="Descripción" className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-500" />
-            <div className="grid grid-cols-2 gap-2">
-              <input type="number" value={planData.descuento || ''} onChange={e => setPlanData({...planData, descuento: Number(e.target.value)})} placeholder="% Descuento" className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-500" />
-              <input type="number" value={planData.dias || ''} onChange={e => setPlanData({...planData, dias: Number(e.target.value)})} placeholder="Duración (días)" className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-500" />
-            </div>
-            <div className="flex gap-2">
-              <button onClick={() => setPlanData({...planData, tipo: 'venta'})} className={`flex-1 py-2 rounded-xl text-xs font-medium ${planData.tipo === 'venta' ? 'bg-emerald-500 text-slate-950' : 'bg-slate-800 text-slate-400'}`}>💰 Venta</button>
-              <button onClick={() => setPlanData({...planData, tipo: 'arriendo'})} className={`flex-1 py-2 rounded-xl text-xs font-medium ${planData.tipo === 'arriendo' ? 'bg-cyan-500 text-slate-950' : 'bg-slate-800 text-slate-400'}`}>📋 Arriendo</button>
-            </div>
-            <button onClick={savePlan} className="w-full py-3 bg-gradient-to-r from-amber-500 to-amber-400 text-slate-950 font-bold rounded-xl text-sm">
-              <Check size={16} className="inline mr-2" />{editingPlan ? 'Guardar Cambios' : 'Crear Plan'}
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
