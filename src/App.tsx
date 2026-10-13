@@ -27,14 +27,14 @@ const PUERTOS_DATA = [
 ];
 
 const INITIAL_PRODUCTS = [
-  { id: 1, nombre: 'Traje Neopreno 7mm Henderson', categoria: 'Trajes', precioVenta: 450000, precioArriendo: 15000, stock: 12, imagen: '🤿', descripcion: 'Traje húmedo 7mm para aguas frías del sur de Chile. Costuras selladas, capucha integrada.' },
-  { id: 2, nombre: 'Ordenador Cressi Giotto', categoria: 'Electrónica', precioVenta: 380000, precioArriendo: 12000, stock: 8, imagen: '🖥️', descripcion: 'Ordenador de buceo con algoritmo RGBM, 3 modos de operación, nitrox compatible.' },
-  { id: 3, nombre: 'Chicote Profesional 12m', categoria: 'Reguladores', precioVenta: 120000, precioArriendo: 5000, stock: 25, imagen: '🔗', descripcion: 'Chicote reforzado de 12 metros con conectores DIN, manguera de alta presión.' },
-  { id: 4, nombre: 'Regulador Apeks MTX-R', categoria: 'Reguladores', precioVenta: 520000, precioArriendo: 18000, stock: 6, imagen: '⚙️', descripcion: 'Regulador de doble etapa para buceo comercial, primera etapa compensada.' },
-  { id: 5, nombre: 'Aceite Coltri 1.5L', categoria: 'Compresores', precioVenta: 85000, precioArriendo: 0, stock: 40, imagen: '🛢️', descripcion: 'Aceite sintético para compresores Coltri, cambio cada 100 horas de uso.' },
-  { id: 6, nombre: 'Cilindro O2 Medicinal 3L', categoria: 'Cilindros', precioVenta: 280000, precioArriendo: 8000, stock: 15, imagen: '🫧', descripcion: 'Cilindro de aluminio 3 litros para oxígeno medicinal, válvula DIN.' },
-  { id: 7, nombre: 'Arnés de Seguridad Industrial', categoria: 'Seguridad', precioVenta: 95000, precioArriendo: 4000, stock: 20, imagen: '🦺', descripcion: 'Arnés de cuerpo completo certificado para trabajos subacuáticos.' },
-  { id: 8, nombre: 'Casco Kirby Morgan 48', categoria: 'Equipos', precioVenta: 3500000, precioArriendo: 85000, stock: 3, imagen: '⛑️', descripcion: 'Casco de buceo comercial con sistema de comunicaciones integrado.' },
+  { id: 1, nombre: 'Traje Neopreno 7mm Henderson', categoria: 'Trajes', precioVenta: 450000, precioArriendo: 15000, stock: 12, imagen: 'https://image.qwenlm.ai/generated-images/54835510-0583-4204-b9e0-572ab9dcb867/_result.png', descripcion: 'Traje húmedo 7mm para aguas frías del sur de Chile. Costuras selladas, capucha integrada.' },
+  { id: 2, nombre: 'Ordenador Cressi Giotto', categoria: 'Electrónica', precioVenta: 380000, precioArriendo: 12000, stock: 8, imagen: 'https://image.qwenlm.ai/generated-images/cdfa54ec-ddd2-49df-a337-1a9cf2bda3ba/_result.png', descripcion: 'Ordenador de buceo con algoritmo RGBM, 3 modos de operación, nitrox compatible.' },
+  { id: 3, nombre: 'Chicote Profesional 12m', categoria: 'Reguladores', precioVenta: 120000, precioArriendo: 5000, stock: 25, imagen: 'https://image.qwenlm.ai/generated-images/544a4cc0-ee75-473e-81e8-7c814d5ed7c0/_result.png', descripcion: 'Chicote reforzado de 12 metros con conectores DIN, manguera de alta presión.' },
+  { id: 4, nombre: 'Regulador Apeks MTX-R', categoria: 'Reguladores', precioVenta: 520000, precioArriendo: 18000, stock: 6, imagen: 'https://image.qwenlm.ai/generated-images/4ffa3511-9727-472a-8a5b-f8ee886973ee/_result.png', descripcion: 'Regulador de doble etapa para buceo comercial, primera etapa compensada.' },
+  { id: 5, nombre: 'Aceite Coltri 1.5L', categoria: 'Compresores', precioVenta: 85000, precioArriendo: 0, stock: 40, imagen: 'https://image.qwenlm.ai/generated-images/18a47774-5d9c-4ce9-8bdc-2c5367ac4827/_result.png', descripcion: 'Aceite sintético para compresores Coltri, cambio cada 100 horas de uso.' },
+  { id: 6, nombre: 'Cilindro O2 Medicinal 3L', categoria: 'Cilindros', precioVenta: 280000, precioArriendo: 8000, stock: 15, imagen: 'https://image.qwenlm.ai/generated-images/b414f931-b49d-4af9-9649-193e33b29261/_result.png', descripcion: 'Cilindro de aluminio 3 litros para oxígeno medicinal, válvula DIN.' },
+  { id: 7, nombre: 'Arnés de Seguridad Industrial', categoria: 'Seguridad', precioVenta: 95000, precioArriendo: 4000, stock: 20, imagen: 'https://image.qwenlm.ai/generated-images/3d822e42-44be-498b-a2dd-3759e9b1279a/_result.png', descripcion: 'Arnés de cuerpo completo certificado para trabajos subacuáticos.' },
+  { id: 8, nombre: 'Casco Kirby Morgan 48', categoria: 'Equipos', precioVenta: 3500000, precioArriendo: 85000, stock: 3, imagen: 'https://image.qwenlm.ai/generated-images/a8d38bda-d420-4ee0-a18b-8b086866e4d8/_result.png', descripcion: 'Casco de buceo comercial con sistema de comunicaciones integrado.' },
 ];
 
 const INITIAL_PLANS = [
@@ -856,7 +856,13 @@ function CatalogoModule({ cart, setCart }: any) {
         {filtered.map(p => (
           <div key={p.id} className="bg-slate-800/50 rounded-xl p-4 border border-slate-700 hover:border-amber-500/30 transition-all">
             <div className="flex items-start gap-3">
-              <div className="w-12 h-12 rounded-xl bg-slate-900 flex items-center justify-center text-2xl">{p.imagen}</div>
+              <div className="w-16 h-16 rounded-xl bg-slate-900 overflow-hidden flex-shrink-0 flex items-center justify-center">
+                {p.imagen && p.imagen.startsWith('http') ? (
+                  <img src={p.imagen} alt={p.nombre} className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-2xl">{p.imagen || '📦'}</span>
+                )}
+              </div>
               <div className="flex-1 min-w-0">
                 <h3 className="text-sm font-semibold text-white truncate">{p.nombre}</h3>
                 <p className="text-[10px] text-slate-400">{p.categoria} • Stock: {p.stock}</p>
@@ -884,7 +890,13 @@ function CatalogoModule({ cart, setCart }: any) {
               </div>
 
               <div className="flex items-center gap-3">
-                <div className="w-16 h-16 rounded-xl bg-slate-800 flex items-center justify-center text-3xl">{selectedProduct.imagen}</div>
+                <div className="w-24 h-24 rounded-xl bg-slate-800 overflow-hidden flex-shrink-0 flex items-center justify-center">
+                  {selectedProduct.imagen && selectedProduct.imagen.startsWith('http') ? (
+                    <img src={selectedProduct.imagen} alt={selectedProduct.nombre} className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-3xl">{selectedProduct.imagen || '📦'}</span>
+                  )}
+                </div>
                 <div>
                   <p className="text-xs text-slate-400">{selectedProduct.categoria}</p>
                   <p className="text-sm text-slate-300 mt-1">{selectedProduct.descripcion}</p>
@@ -1053,7 +1065,7 @@ function AdminModule() {
   const [showPlanForm, setShowPlanForm] = useState(false);
 
   // Product form state
-  const [formData, setFormData] = useState({ nombre: '', categoria: '', precioVenta: 0, precioArriendo: 0, stock: 0, imagen: '📦', descripcion: '' });
+  const [formData, setFormData] = useState({ nombre: '', categoria: '', precioVenta: 0, precioArriendo: 0, stock: 0, imagen: '', descripcion: '' });
 
   // Plan form state
   const [planData, setPlanData] = useState({ nombre: '', descuento: 0, dias: 0, tipo: 'venta', descripcion: '' });
@@ -1070,7 +1082,7 @@ function AdminModule() {
     }
     setShowForm(false);
     setEditingProduct(null);
-    setFormData({ nombre: '', categoria: '', precioVenta: 0, precioArriendo: 0, stock: 0, imagen: '📦', descripcion: '' });
+    setFormData({ nombre: '', categoria: '', precioVenta: 0, precioArriendo: 0, stock: 0, imagen: '', descripcion: '' });
   };
 
   const deleteProduct = (id: number) => {
@@ -1130,14 +1142,20 @@ function AdminModule() {
 
       {activeTab === 'productos' && (
         <div className="space-y-3">
-          <button onClick={() => { setShowForm(true); setEditingProduct(null); setFormData({ nombre: '', categoria: '', precioVenta: 0, precioArriendo: 0, stock: 0, imagen: '📦', descripcion: '' }); }} className="w-full py-2.5 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-emerald-400 text-xs font-semibold">
+          <button onClick={() => { setShowForm(true); setEditingProduct(null); setFormData({ nombre: '', categoria: '', precioVenta: 0, precioArriendo: 0, stock: 0, imagen: '', descripcion: '' }); }} className="w-full py-2.5 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-emerald-400 text-xs font-semibold">
             <Plus size={14} className="inline mr-1" />Nuevo Producto
           </button>
 
           {products.map(p => (
             <div key={p.id} className="bg-slate-800/50 rounded-xl p-3 border border-slate-700">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-slate-900 flex items-center justify-center text-lg">{p.imagen}</div>
+                <div className="w-12 h-12 rounded-lg bg-slate-900 overflow-hidden flex-shrink-0 flex items-center justify-center">
+                  {p.imagen && p.imagen.startsWith('http') ? (
+                    <img src={p.imagen} alt={p.nombre} className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-lg">{p.imagen || '📦'}</span>
+                  )}
+                </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-semibold text-white truncate">{p.nombre}</p>
                   <p className="text-[10px] text-slate-400">{p.categoria} • Stock: {p.stock}</p>
@@ -1189,7 +1207,12 @@ function AdminModule() {
               <input type="number" value={formData.precioArriendo || ''} onChange={e => setFormData({...formData, precioArriendo: Number(e.target.value)})} placeholder="Precio Arriendo/día" className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-rose-500" />
             </div>
             <input type="number" value={formData.stock || ''} onChange={e => setFormData({...formData, stock: Number(e.target.value)})} placeholder="Stock disponible" className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-rose-500" />
-            <input value={formData.imagen} onChange={e => setFormData({...formData, imagen: e.target.value})} placeholder="Emoji/Ícono (ej: 🤿)" className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-rose-500" />
+            <input value={formData.imagen} onChange={e => setFormData({...formData, imagen: e.target.value})} placeholder="URL de imagen (ej: https://...)" className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-rose-500" />
+            {formData.imagen && formData.imagen.startsWith('http') && (
+              <div className="w-20 h-20 rounded-xl bg-slate-800 overflow-hidden">
+                <img src={formData.imagen} alt="Preview" className="w-full h-full object-cover" />
+              </div>
+            )}
             <textarea value={formData.descripcion} onChange={e => setFormData({...formData, descripcion: e.target.value})} placeholder="Descripción / Ficha técnica" rows={3} className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-rose-500 resize-none" />
             <button onClick={saveProduct} className="w-full py-3 bg-gradient-to-r from-emerald-500 to-emerald-400 text-slate-950 font-bold rounded-xl text-sm">
               <Check size={16} className="inline mr-2" />{editingProduct ? 'Guardar Cambios' : 'Crear Producto'}
@@ -1287,7 +1310,13 @@ function CartModal({ cart, setCart, onClose }: any) {
                     <div key={item.id} className="bg-slate-800/50 rounded-xl p-3 border border-slate-700">
                       <div className="flex items-start justify-between">
                         <div className="flex items-center gap-2">
-                          <span className="text-lg">{item.product.imagen}</span>
+                          <div className="w-10 h-10 rounded-lg bg-slate-900 overflow-hidden flex-shrink-0 flex items-center justify-center">
+                            {item.product.imagen && item.product.imagen.startsWith('http') ? (
+                              <img src={item.product.imagen} alt={item.product.nombre} className="w-full h-full object-cover" />
+                            ) : (
+                              <span className="text-lg">{item.product.imagen || '📦'}</span>
+                            )}
+                          </div>
                           <div>
                             <p className="text-xs font-semibold text-white">{item.product.nombre}</p>
                             <p className="text-[10px] text-slate-400">{item.mode === 'comprar' ? '💰 Compra' : '📋 Arriendo'} • Cant: {item.quantity}{item.mode === 'arrendar' ? ` • ${item.days} días` : ''}</p>
