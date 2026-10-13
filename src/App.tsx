@@ -7,7 +7,7 @@ import {
   Smartphone, Monitor, ArrowLeft, Droplets, Ship, CircleDot,
   Zap, Shield, Activity, Target, Navigation, RotateCw,
   Calendar, DollarSign, Percent, FileText, Send, X, Check,
-  Menu, Home, Wrench, User, Bell
+  Menu, Home, Wrench, User, Bell, Image as ImageIcon
 } from 'lucide-react';
 
 // ==================== DATA ====================
@@ -60,6 +60,95 @@ const PASOS_TALLER = [
   { nombre: 'Carga O2', icon: '🫧', desc: 'Carga de O2 medicinal a 200 bar' },
   { nombre: 'Listo para retiro', icon: '✅', desc: 'Certificado y despachado' },
 ];
+
+// ==================== STORAGE (Persistencia local de productos y planes) ====================
+const STORAGE_KEY_PRODUCTOS = 'gerdiver_productos_v1';
+const STORAGE_KEY_PLANES = 'gerdiver_planes_v1';
+
+function loadProductos(): any[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_PRODUCTOS);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed;
+    }
+  } catch (e) { /* ignora errores de lectura */ }
+  return INITIAL_PRODUCTS;
+}
+
+function saveProductos(produtos: any[]) {
+  try {
+    localStorage.setItem(STORAGE_KEY_PRODUCTOS, JSON.stringify(produtos));
+  } catch (e) {
+    // Cuota superada (imágenes muy grandes en base64) -> reintentar sin imágenes
+    try {
+      localStorage.setItem(STORAGE_KEY_PRODUCTOS, JSON.stringify(produtos.map(p => ({ ...p, imagen: typeof p.imagen === 'string' && !p.imagen.startsWith('data:') ? p.imagen : '📦' }))));
+    } catch (_) { /* no se puede persistir */ }
+  }
+}
+
+function loadPlanes(): any[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_PLANES);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed;
+    }
+  } catch (e) { /* ignora errores de lectura */ }
+  return INITIAL_PLANS;
+}
+
+function savePlanes(planes: any[]) {
+  try {
+    localStorage.setItem(STORAGE_KEY_PLANES, JSON.stringify(planes));
+  } catch (e) { /* ignora */ }
+}
+
+// Convierte un archivo de imagen a Data URL (base64), reduciéndola para que quepa en localStorage
+function fileToImagenReducida(file: File, maxLado = 500, calidad = 0.8): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('No se pudo leer el archivo'));
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error('Archivo no es una imagen válida'));
+      img.onload = () => {
+        let { width, height } = img;
+        if (width > maxLado || height > maxLado) {
+          const escala = Math.min(maxLado / width, maxLado / height);
+          width = Math.round(width * escala);
+          height = Math.round(height * escala);
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) { reject(new Error('Canvas no disponible')); return; }
+        ctx.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg', calidad));
+      };
+      img.src = reader.result as string;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function esUrlImagen(imagen: any): boolean {
+  return typeof imagen === 'string' && (imagen.startsWith('data:image') || /^https?:\/\//i.test(imagen));
+}
+
+// ==================== RENDER DE IMAGEN/EMOJI DE PRODUCTO ====================
+function ProductoImagen({ imagen, alt, size = 48 }: { imagen: any; alt?: string; size?: number }) {
+  const rounded = size >= 64 ? 'rounded-xl' : 'rounded-lg';
+  if (esUrlImagen(imagen)) {
+    return <img src={imagen} alt={alt || ''} className={`object-cover ${rounded}`} style={{ width: size, height: size }} />;
+  }
+  return (
+    <div className={`bg-slate-900 flex items-center justify-center shrink-0 ${rounded}`} style={{ width: size, height: size, fontSize: size * 0.5 }}>
+      {imagen || '📦'}
+    </div>
+  );
+}
 
 // ==================== UTILITY FUNCTIONS ====================
 function getRecomendacionInmersion(oleaje: number, viento: number): { texto: string; color: string; icon: any } {
@@ -792,8 +881,8 @@ function ConversorModule() {
 
 // ==================== CATALOGO MODULE ====================
 function CatalogoModule({ cart, setCart }: any) {
-  const [products, setProducts] = useState(INITIAL_PRODUCTS);
-  const [plans] = useState(INITIAL_PLANS);
+  const [products, setProducts] = useState(loadProductos);
+  const [plans] = useState(loadPlanes);
   const [search, setSearch] = useState('');
   const [catFilter, setCatFilter] = useState('Todos');
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
@@ -856,7 +945,7 @@ function CatalogoModule({ cart, setCart }: any) {
         {filtered.map(p => (
           <div key={p.id} className="bg-slate-800/50 rounded-xl p-4 border border-slate-700 hover:border-amber-500/30 transition-all">
             <div className="flex items-start gap-3">
-              <div className="w-12 h-12 rounded-xl bg-slate-900 flex items-center justify-center text-2xl">{p.imagen}</div>
+              <ProductoImagen imagen={p.imagen} alt={p.nombre} size={48} />
               <div className="flex-1 min-w-0">
                 <h3 className="text-sm font-semibold text-white truncate">{p.nombre}</h3>
                 <p className="text-[10px] text-slate-400">{p.categoria} • Stock: {p.stock}</p>
@@ -884,7 +973,7 @@ function CatalogoModule({ cart, setCart }: any) {
               </div>
 
               <div className="flex items-center gap-3">
-                <div className="w-16 h-16 rounded-xl bg-slate-800 flex items-center justify-center text-3xl">{selectedProduct.imagen}</div>
+                <ProductoImagen imagen={selectedProduct.imagen} alt={selectedProduct.nombre} size={64} />
                 <div>
                   <p className="text-xs text-slate-400">{selectedProduct.categoria}</p>
                   <p className="text-sm text-slate-300 mt-1">{selectedProduct.descripcion}</p>
@@ -1045,24 +1134,49 @@ function TallerModule() {
 function AdminModule() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [pin, setPin] = useState('');
-  const [products, setProducts] = useState(INITIAL_PRODUCTS);
-  const [plans, setPlans] = useState(INITIAL_PLANS);
+  const [products, setProducts] = useState(loadProductos);
+  const [plans, setPlans] = useState(loadPlanes);
   const [activeTab, setActiveTab] = useState<'productos' | 'planes'>('productos');
   const [showForm, setShowForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState<any>(null);
   const [showPlanForm, setShowPlanForm] = useState(false);
+  const [editingPlan, setEditingPlan] = useState<any>(null);
+  const [imagenCargando, setImagenCargando] = useState(false);
+  const [formError, setFormError] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Product form state
-  const [formData, setFormData] = useState({ nombre: '', categoria: '', precioVenta: 0, precioArriendo: 0, stock: 0, imagen: '📦', descripcion: '' });
+  const PRODUCTO_VACIO = { nombre: '', categoria: '', precioVenta: 0, precioArriendo: 0, stock: 0, imagen: '📦', descripcion: '' };
+  const [formData, setFormData] = useState(PRODUCTO_VACIO);
 
   // Plan form state
-  const [planData, setPlanData] = useState({ nombre: '', descuento: 0, dias: 0, tipo: 'venta', descripcion: '' });
+  const PLAN_VACIO = { nombre: '', descuento: 0, dias: 0, tipo: 'venta', descripcion: '' };
+  const [planData, setPlanData] = useState(PLAN_VACIO);
+
+  // Sincroniza con la persistencia local (localStorage) en cada cambio
+  useEffect(() => { saveProductos(products); }, [products]);
+  useEffect(() => { savePlanes(plans); }, [plans]);
 
   const handleLogin = () => {
     if (pin === '1234') setIsAuthenticated(true);
   };
 
+  const abrirFormProducto = (p?: any) => {
+    setFormError('');
+    if (p) {
+      setEditingProduct(p);
+      setFormData({ ...PRODUCTO_VACIO, ...p });
+    } else {
+      setEditingProduct(null);
+      setFormData(PRODUCTO_VACIO);
+    }
+    setShowForm(true);
+  };
+
   const saveProduct = () => {
+    if (!formData.nombre.trim()) { setFormError('El producto necesita un nombre.'); return; }
+    if (!formData.categoria.trim()) { setFormError('Indica una categoría para el producto.'); return; }
+    setFormError('');
     if (editingProduct) {
       setProducts(products.map(p => p.id === editingProduct.id ? { ...formData, id: p.id } : p));
     } else {
@@ -1070,21 +1184,76 @@ function AdminModule() {
     }
     setShowForm(false);
     setEditingProduct(null);
-    setFormData({ nombre: '', categoria: '', precioVenta: 0, precioArriendo: 0, stock: 0, imagen: '📦', descripcion: '' });
+    setFormData(PRODUCTO_VACIO);
   };
 
   const deleteProduct = (id: number) => {
     setProducts(products.filter(p => p.id !== id));
   };
 
+  // Carga de imagen desde archivo (se redimensiona y guarda como base64) o desde URL
+  const handleFileImagen = async (file: File | undefined | null) => {
+    if (!file) return;
+    if (!file.type.startsWith('image/')) { setFormError('El archivo seleccionado no es una imagen.'); return; }
+    setImagenCargando(true);
+    setFormError('');
+    try {
+      const dataUrl = await fileToImagenReducida(file);
+      setFormData(prev => ({ ...prev, imagen: dataUrl }));
+    } catch (e: any) {
+      setFormError(e?.message || 'No se pudo cargar la imagen.');
+    } finally {
+      setImagenCargando(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const handleUrlImagen = (url: string) => {
+    const limpio = url.trim();
+    if (!limpio) { setFormData(prev => ({ ...prev, imagen: '📦' })); return; }
+    if (/^https?:\/\//i.test(limpio) || limpio.startsWith('data:image')) {
+      setFormError('');
+      setFormData(prev => ({ ...prev, imagen: limpio }));
+    } else {
+      // Permite también escribir un emoji (ej: 🤿)
+      setFormData(prev => ({ ...prev, imagen: limpio }));
+    }
+  };
+
+  const abrirFormPlan = (pl?: any) => {
+    if (pl) {
+      setEditingPlan(pl);
+      setPlanData({ ...PLAN_VACIO, ...pl });
+    } else {
+      setEditingPlan(null);
+      setPlanData(PLAN_VACIO);
+    }
+    setShowPlanForm(true);
+  };
+
   const savePlan = () => {
-    setPlans([...plans, { ...planData, id: Date.now() }]);
+    if (!planData.nombre.trim()) return;
+    if (editingPlan) {
+      setPlans(plans.map(pl => pl.id === editingPlan.id ? { ...planData, id: pl.id } : pl));
+    } else {
+      setPlans([...plans, { ...planData, id: Date.now() }]);
+    }
     setShowPlanForm(false);
-    setPlanData({ nombre: '', descuento: 0, dias: 0, tipo: 'venta', descripcion: '' });
+    setEditingPlan(null);
+    setPlanData(PLAN_VACIO);
   };
 
   const deletePlan = (id: number) => {
     setPlans(plans.filter(p => p.id !== id));
+  };
+
+  const restaurarDatos = () => {
+    if (confirm('¿Restaurar los productos y planes de fábrica? Se perderán los cambios guardados.')) {
+      localStorage.removeItem(STORAGE_KEY_PRODUCTOS);
+      localStorage.removeItem(STORAGE_KEY_PLANES);
+      setProducts(INITIAL_PRODUCTS);
+      setPlans(INITIAL_PLANS);
+    }
   };
 
   if (!isAuthenticated) {
@@ -1130,21 +1299,25 @@ function AdminModule() {
 
       {activeTab === 'productos' && (
         <div className="space-y-3">
-          <button onClick={() => { setShowForm(true); setEditingProduct(null); setFormData({ nombre: '', categoria: '', precioVenta: 0, precioArriendo: 0, stock: 0, imagen: '📦', descripcion: '' }); }} className="w-full py-2.5 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-emerald-400 text-xs font-semibold">
+          <button onClick={() => abrirFormProducto()} className="w-full py-2.5 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-emerald-400 text-xs font-semibold">
             <Plus size={14} className="inline mr-1" />Nuevo Producto
           </button>
+
+          {products.length === 0 && (
+            <p className="text-center text-[11px] text-slate-500 py-4">No hay productos. Crea el primero con el botón de arriba.</p>
+          )}
 
           {products.map(p => (
             <div key={p.id} className="bg-slate-800/50 rounded-xl p-3 border border-slate-700">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-slate-900 flex items-center justify-center text-lg">{p.imagen}</div>
+                <ProductoImagen imagen={p.imagen} alt={p.nombre} size={40} />
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-semibold text-white truncate">{p.nombre}</p>
                   <p className="text-[10px] text-slate-400">{p.categoria} • Stock: {p.stock}</p>
                   <p className="text-[10px] text-emerald-400">{formatCLP(p.precioVenta)}</p>
                 </div>
                 <div className="flex gap-1">
-                  <button onClick={() => { setEditingProduct(p); setFormData(p); setShowForm(true); }} className="p-1.5 rounded-lg bg-slate-700 text-slate-400"><Edit size={12} /></button>
+                  <button onClick={() => abrirFormProducto(p)} className="p-1.5 rounded-lg bg-slate-700 text-slate-400 hover:text-cyan-400"><Edit size={12} /></button>
                   <button onClick={() => deleteProduct(p.id)} className="p-1.5 rounded-lg bg-rose-500/20 text-rose-400"><Trash2 size={12} /></button>
                 </div>
               </div>
@@ -1155,7 +1328,7 @@ function AdminModule() {
 
       {activeTab === 'planes' && (
         <div className="space-y-3">
-          <button onClick={() => setShowPlanForm(true)} className="w-full py-2.5 bg-amber-500/10 border border-amber-500/30 rounded-xl text-amber-400 text-xs font-semibold">
+          <button onClick={() => abrirFormPlan()} className="w-full py-2.5 bg-amber-500/10 border border-amber-500/30 rounded-xl text-amber-400 text-xs font-semibold">
             <Plus size={14} className="inline mr-1" />Nuevo Plan
           </button>
 
@@ -1167,12 +1340,19 @@ function AdminModule() {
                   <p className="text-[10px] text-slate-400">{p.tipo === 'venta' ? '💰 Venta' : '📋 Arriendo'} • {p.dias > 0 ? `${p.dias} días` : 'Sin límite'}</p>
                   <p className="text-[10px] text-amber-400">Descuento: {p.descuento}%</p>
                 </div>
-                <button onClick={() => deletePlan(p.id)} className="p-1.5 rounded-lg bg-rose-500/20 text-rose-400"><Trash2 size={12} /></button>
+                <div className="flex gap-1">
+                  <button onClick={() => abrirFormPlan(p)} className="p-1.5 rounded-lg bg-slate-700 text-slate-400 hover:text-cyan-400"><Edit size={12} /></button>
+                  <button onClick={() => deletePlan(p.id)} className="p-1.5 rounded-lg bg-rose-500/20 text-rose-400"><Trash2 size={12} /></button>
+                </div>
               </div>
             </div>
           ))}
         </div>
       )}
+
+      <button onClick={restaurarDatos} className="w-full py-2 bg-slate-800/60 border border-slate-700 rounded-xl text-slate-500 text-[10px] hover:text-white transition-colors">
+        <RotateCw size={12} className="inline mr-1" />Restaurar datos de fábrica
+      </button>
 
       {/* Product Form Modal */}
       {showForm && (
@@ -1189,8 +1369,36 @@ function AdminModule() {
               <input type="number" value={formData.precioArriendo || ''} onChange={e => setFormData({...formData, precioArriendo: Number(e.target.value)})} placeholder="Precio Arriendo/día" className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-rose-500" />
             </div>
             <input type="number" value={formData.stock || ''} onChange={e => setFormData({...formData, stock: Number(e.target.value)})} placeholder="Stock disponible" className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-rose-500" />
-            <input value={formData.imagen} onChange={e => setFormData({...formData, imagen: e.target.value})} placeholder="Emoji/Ícono (ej: 🤿)" className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-rose-500" />
+
+            {/* Selector de Imagen del producto */}
+            <div className="bg-slate-800/60 border border-slate-700 rounded-xl p-3 space-y-2">
+              <p className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">Imagen del producto</p>
+              <div className="flex items-center gap-3">
+                <ProductoImagen imagen={formData.imagen} alt={formData.nombre} size={64} />
+                <div className="flex-1 space-y-2">
+                  <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={e => handleFileImagen(e.target.files?.[0])} />
+                  <button onClick={() => fileInputRef.current?.click()} disabled={imagenCargando} className="w-full py-2 rounded-lg bg-slate-700 text-xs text-cyan-400 font-medium hover:bg-slate-600 disabled:opacity-50">
+                    {imagenCargando ? 'Procesando...' : (<><ImageIcon size={12} className="inline mr-1" />Subir imagen</>)}
+                  </button>
+                  {esUrlImagen(formData.imagen) && (
+                    <button onClick={() => setFormData({ ...formData, imagen: '📦' })} className="w-full py-1.5 rounded-lg bg-rose-500/10 text-[10px] text-rose-400 hover:bg-rose-500/20">
+                      Quitar imagen
+                    </button>
+                  )}
+                </div>
+              </div>
+              <input
+                defaultValue={esUrlImagen(formData.imagen) && !formData.imagen.startsWith('data:') ? formData.imagen : ''}
+                onBlur={e => handleUrlImagen(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') handleUrlImagen((e.target as HTMLInputElement).value); }}
+                placeholder="…o pega una URL de imagen (https://...)"
+                className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-[11px] text-white placeholder-slate-500 focus:outline-none focus:border-rose-500"
+              />
+              <p className="text-[9px] text-slate-500">También puedes escribir un emoji (ej: 🤿) en el campo de arriba.</p>
+            </div>
+
             <textarea value={formData.descripcion} onChange={e => setFormData({...formData, descripcion: e.target.value})} placeholder="Descripción / Ficha técnica" rows={3} className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-rose-500 resize-none" />
+            {formError && <p className="text-[11px] text-rose-400 bg-rose-500/10 border border-rose-500/30 rounded-lg px-3 py-2">{formError}</p>}
             <button onClick={saveProduct} className="w-full py-3 bg-gradient-to-r from-emerald-500 to-emerald-400 text-slate-950 font-bold rounded-xl text-sm">
               <Check size={16} className="inline mr-2" />{editingProduct ? 'Guardar Cambios' : 'Crear Producto'}
             </button>
@@ -1203,8 +1411,8 @@ function AdminModule() {
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-end justify-center">
           <div className="w-full max-w-[390px] bg-slate-900 rounded-t-3xl border-t border-slate-700 max-h-[85vh] overflow-y-auto p-4 space-y-3">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-bold text-white">Nuevo Plan</h3>
-              <button onClick={() => setShowPlanForm(false)} className="p-1 rounded-lg bg-slate-800"><X size={14} className="text-slate-400" /></button>
+              <h3 className="text-sm font-bold text-white">{editingPlan ? 'Editar Plan' : 'Nuevo Plan'}</h3>
+              <button onClick={() => { setShowPlanForm(false); setEditingPlan(null); }} className="p-1 rounded-lg bg-slate-800"><X size={14} className="text-slate-400" /></button>
             </div>
             <input value={planData.nombre} onChange={e => setPlanData({...planData, nombre: e.target.value})} placeholder="Nombre del plan" className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-500" />
             <input value={planData.descripcion} onChange={e => setPlanData({...planData, descripcion: e.target.value})} placeholder="Descripción" className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-500" />
@@ -1217,7 +1425,7 @@ function AdminModule() {
               <button onClick={() => setPlanData({...planData, tipo: 'arriendo'})} className={`flex-1 py-2 rounded-xl text-xs font-medium ${planData.tipo === 'arriendo' ? 'bg-cyan-500 text-slate-950' : 'bg-slate-800 text-slate-400'}`}>📋 Arriendo</button>
             </div>
             <button onClick={savePlan} className="w-full py-3 bg-gradient-to-r from-amber-500 to-amber-400 text-slate-950 font-bold rounded-xl text-sm">
-              <Check size={16} className="inline mr-2" />Crear Plan
+              <Check size={16} className="inline mr-2" />{editingPlan ? 'Guardar Cambios' : 'Crear Plan'}
             </button>
           </div>
         </div>
@@ -1287,7 +1495,7 @@ function CartModal({ cart, setCart, onClose }: any) {
                     <div key={item.id} className="bg-slate-800/50 rounded-xl p-3 border border-slate-700">
                       <div className="flex items-start justify-between">
                         <div className="flex items-center gap-2">
-                          <span className="text-lg">{item.product.imagen}</span>
+                          <ProductoImagen imagen={item.product.imagen} alt={item.product.nombre} size={36} />
                           <div>
                             <p className="text-xs font-semibold text-white">{item.product.nombre}</p>
                             <p className="text-[10px] text-slate-400">{item.mode === 'comprar' ? '💰 Compra' : '📋 Arriendo'} • Cant: {item.quantity}{item.mode === 'arrendar' ? ` • ${item.days} días` : ''}</p>
