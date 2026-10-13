@@ -95,6 +95,7 @@ export default function App() {
   const [viewMode, setViewMode] = useState<'mobile' | 'desktop'>('mobile');
   const [activeModule, setActiveModule] = useState('inicio');
   const [cart, setCart] = useState<any[]>([]);
+  const [products, setProducts] = useState(INITIAL_PRODUCTS);
   const [showCart, setShowCart] = useState(false);
   const [showSplash, setShowSplash] = useState(true);
 
@@ -119,7 +120,7 @@ export default function App() {
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-slate-950 rounded-b-2xl z-50" />
             <Header viewMode={viewMode} setViewMode={setViewMode} cartCount={cart.length} onCartClick={() => setShowCart(true)} />
             <div className="flex-1 overflow-y-auto pb-20 scrollbar-hide">
-              <ModuleRenderer module={activeModule} cart={cart} setCart={setCart} setActive={setActiveModule} />
+              <ModuleRenderer module={activeModule} cart={cart} setCart={setCart} setActive={setActiveModule} products={products} setProducts={setProducts} />
             </div>
             <BottomNav active={activeModule} setActive={setActiveModule} modules={modules} />
           </div>
@@ -128,7 +129,7 @@ export default function App() {
         <div className="flex min-h-screen">
           <DesktopSidebar active={activeModule} setActive={setActiveModule} modules={modules} viewMode={viewMode} setViewMode={setViewMode} cartCount={cart.length} onCartClick={() => setShowCart(true)} />
           <div className="flex-1 overflow-y-auto bg-slate-950">
-            <ModuleRenderer module={activeModule} cart={cart} setCart={setCart} setActive={setActiveModule} />
+            <ModuleRenderer module={activeModule} cart={cart} setCart={setCart} setActive={setActiveModule} products={products} setProducts={setProducts} />
           </div>
         </div>
       )}
@@ -332,14 +333,14 @@ function BottomNav({ active, setActive, modules }: any) {
 }
 
 // ==================== MODULE RENDERER ====================
-function ModuleRenderer({ module, cart, setCart, setActive }: any) {
+function ModuleRenderer({ module, cart, setCart, setActive, products, setProducts }: any) {
   switch (module) {
     case 'inicio': return <InicioModule setActive={setActive} />;
     case 'clima': return <ClimaModule />;
     case 'convertidor': return <ConversorModule />;
-    case 'catalogo': return <CatalogoModule cart={cart} setCart={setCart} />;
+    case 'catalogo': return <CatalogoModule cart={cart} setCart={setCart} products={products} />;
     case 'taller': return <TallerModule />;
-    case 'admin': return <AdminModule />;
+    case 'admin': return <AdminModule products={products} setProducts={setProducts} />;
     default: return <InicioModule setActive={setActive} />;
   }
 }
@@ -722,8 +723,7 @@ function ConversorModule() {
 }
 
 // ==================== CATALOGO MODULE ====================
-function CatalogoModule({ cart, setCart }: any) {
-  const [products] = useState(INITIAL_PRODUCTS);
+function CatalogoModule({ cart, setCart, products }: any) {
   const [plans] = useState(INITIAL_PLANS);
   const [search, setSearch] = useState('');
   const [catFilter, setCatFilter] = useState('Todos');
@@ -978,12 +978,56 @@ function TallerModule() {
 }
 
 // ==================== ADMIN MODULE ====================
-function AdminModule() {
+function AdminModule({ products, setProducts }: any) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [pin, setPin] = useState('');
+  const [plans] = useState(INITIAL_PLANS);
+  const [activeTab, setActiveTab] = useState<'productos' | 'planes'>('productos');
+  const [showForm, setShowForm] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<any>(null);
+  const [formData, setFormData] = useState({
+    nombre: '',
+    categoria: '',
+    precioVenta: 0,
+    precioArriendo: 0,
+    stock: 0,
+    imagen: '',
+    descripcion: ''
+  });
 
   const handleLogin = () => {
     if (pin === '1234') setIsAuthenticated(true);
+  };
+
+  const saveProduct = () => {
+    if (!formData.nombre || !formData.categoria) return;
+    
+    if (editingProduct) {
+      setProducts(products.map(p => p.id === editingProduct.id ? { ...formData, id: p.id } : p));
+    } else {
+      setProducts([...products, { ...formData, id: Date.now() }]);
+    }
+    setShowForm(false);
+    setEditingProduct(null);
+    setFormData({ nombre: '', categoria: '', precioVenta: 0, precioArriendo: 0, stock: 0, imagen: '', descripcion: '' });
+  };
+
+  const editProduct = (product: any) => {
+    setEditingProduct(product);
+    setFormData({
+      nombre: product.nombre,
+      categoria: product.categoria,
+      precioVenta: product.precioVenta,
+      precioArriendo: product.precioArriendo,
+      stock: product.stock,
+      imagen: product.imagen,
+      descripcion: product.descripcion
+    });
+    setShowForm(true);
+  };
+
+  const deleteProduct = (id: number) => {
+    setProducts(products.filter(p => p.id !== id));
   };
 
   if (!isAuthenticated) {
@@ -1017,21 +1061,188 @@ function AdminModule() {
         </button>
       </div>
 
-      <div className="bg-slate-800/50 rounded-2xl p-6 border border-slate-700 text-center">
-        <CheckCircle size={48} className="text-emerald-400 mx-auto mb-3" />
-        <h3 className="text-base font-bold text-white mb-2">Panel de Administración</h3>
-        <p className="text-xs text-slate-400 mb-4">Acceso concedido exitosamente</p>
-        <div className="grid grid-cols-2 gap-3 text-left">
-          <div className="bg-slate-900/50 rounded-xl p-3">
-            <p className="text-[10px] text-slate-500">Productos</p>
-            <p className="text-lg font-bold text-white">{INITIAL_PRODUCTS.length}</p>
-          </div>
-          <div className="bg-slate-900/50 rounded-xl p-3">
-            <p className="text-[10px] text-slate-500">Planes</p>
-            <p className="text-lg font-bold text-white">{INITIAL_PLANS.length}</p>
-          </div>
+      {/* Stats */}
+      <div className="grid grid-cols-2 gap-3">
+        <div className="bg-slate-800/50 rounded-xl p-3 border border-slate-700">
+          <p className="text-[10px] text-slate-500">Productos</p>
+          <p className="text-2xl font-bold text-white">{products.length}</p>
+        </div>
+        <div className="bg-slate-800/50 rounded-xl p-3 border border-slate-700">
+          <p className="text-[10px] text-slate-500">Planes</p>
+          <p className="text-2xl font-bold text-white">{plans.length}</p>
         </div>
       </div>
+
+      {/* Tabs */}
+      <div className="flex gap-2">
+        <button onClick={() => setActiveTab('productos')} className={`flex-1 py-2 rounded-xl text-xs font-semibold transition-all ${activeTab === 'productos' ? 'bg-rose-500 text-white' : 'bg-slate-800 text-slate-400'}`}>
+          <Package size={14} className="inline mr-1" />Productos
+        </button>
+        <button onClick={() => setActiveTab('planes')} className={`flex-1 py-2 rounded-xl text-xs font-semibold transition-all ${activeTab === 'planes' ? 'bg-amber-500 text-slate-950' : 'bg-slate-800 text-slate-400'}`}>
+          <Percent size={14} className="inline mr-1" />Planes
+        </button>
+      </div>
+
+      {activeTab === 'productos' && (
+        <div className="space-y-3">
+          <button onClick={() => { setShowForm(true); setEditingProduct(null); setFormData({ nombre: '', categoria: '', precioVenta: 0, precioArriendo: 0, stock: 0, imagen: '', descripcion: '' }); }} className="w-full py-2.5 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-emerald-400 text-xs font-semibold">
+            <Plus size={14} className="inline mr-1" />Nuevo Producto
+          </button>
+
+          {products.map(p => (
+            <div key={p.id} className="bg-slate-800/50 rounded-xl p-3 border border-slate-700">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-lg bg-slate-900 overflow-hidden flex-shrink-0 flex items-center justify-center">
+                  {p.imagen && p.imagen.startsWith('http') ? (
+                    <img src={p.imagen} alt={p.nombre} className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-lg">{p.imagen || '📦'}</span>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-semibold text-white truncate">{p.nombre}</p>
+                  <p className="text-[10px] text-slate-400">{p.categoria} • Stock: {p.stock}</p>
+                  <p className="text-[10px] text-emerald-400">{formatCLP(p.precioVenta)}</p>
+                </div>
+                <div className="flex gap-1">
+                  <button onClick={() => editProduct(p)} className="p-1.5 rounded-lg bg-slate-700 text-slate-400 hover:text-white">
+                    <Edit size={12} />
+                  </button>
+                  <button onClick={() => deleteProduct(p.id)} className="p-1.5 rounded-lg bg-rose-500/20 text-rose-400 hover:bg-rose-500/30">
+                    <Trash2 size={12} />
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {activeTab === 'planes' && (
+        <div className="space-y-3">
+          {plans.map(p => (
+            <div key={p.id} className="bg-slate-800/50 rounded-xl p-3 border border-slate-700">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-semibold text-white">{p.nombre}</p>
+                  <p className="text-[10px] text-slate-400">{p.tipo === 'venta' ? '💰 Venta' : '📋 Arriendo'} • {p.dias > 0 ? `${p.dias} días` : 'Sin límite'}</p>
+                  <p className="text-[10px] text-amber-400">Descuento: {p.descuento}%</p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Product Form Modal */}
+      {showForm && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-end justify-center">
+          <div className="w-full max-w-[390px] bg-slate-900 rounded-t-3xl border-t border-slate-700 max-h-[90vh] overflow-y-auto">
+            <div className="p-4 space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-base font-bold text-white">{editingProduct ? 'Editar Producto' : 'Nuevo Producto'}</h3>
+                <button onClick={() => { setShowForm(false); setEditingProduct(null); }} className="p-1 rounded-lg bg-slate-800">
+                  <X size={16} className="text-slate-400" />
+                </button>
+              </div>
+
+              {/* Image Preview */}
+              {formData.imagen && formData.imagen.startsWith('http') && (
+                <div className="w-full h-48 rounded-xl bg-slate-800 overflow-hidden border border-slate-700">
+                  <img src={formData.imagen} alt="Vista previa" className="w-full h-full object-cover" />
+                </div>
+              )}
+
+              <div className="space-y-3">
+                <div>
+                  <label className="text-[10px] text-slate-400 uppercase tracking-wider mb-1 block">Nombre del producto *</label>
+                  <input
+                    value={formData.nombre}
+                    onChange={e => setFormData({...formData, nombre: e.target.value})}
+                    placeholder="Ej: Traje Neopreno 7mm"
+                    className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-rose-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[10px] text-slate-400 uppercase tracking-wider mb-1 block">Categoría *</label>
+                  <input
+                    value={formData.categoria}
+                    onChange={e => setFormData({...formData, categoria: e.target.value})}
+                    placeholder="Ej: Trajes, Reguladores, Equipos"
+                    className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-rose-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[10px] text-slate-400 uppercase tracking-wider mb-1 block">URL de imagen</label>
+                  <input
+                    value={formData.imagen}
+                    onChange={e => setFormData({...formData, imagen: e.target.value})}
+                    placeholder="https://ejemplo.com/imagen.jpg"
+                    className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-rose-500"
+                  />
+                  <p className="text-[9px] text-slate-500 mt-1">Ingresa la URL de una imagen del producto</p>
+                </div>
+
+                <div>
+                  <label className="text-[10px] text-slate-400 uppercase tracking-wider mb-1 block">Descripción</label>
+                  <textarea
+                    value={formData.descripcion}
+                    onChange={e => setFormData({...formData, descripcion: e.target.value})}
+                    placeholder="Descripción detallada del producto, características técnicas, materiales, etc."
+                    rows={4}
+                    className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-rose-500 resize-none"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[10px] text-slate-400 uppercase tracking-wider mb-1 block">Precio Venta (CLP)</label>
+                    <input
+                      type="number"
+                      value={formData.precioVenta || ''}
+                      onChange={e => setFormData({...formData, precioVenta: Number(e.target.value)})}
+                      placeholder="450000"
+                      className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-rose-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] text-slate-400 uppercase tracking-wider mb-1 block">Precio Arriendo/día</label>
+                    <input
+                      type="number"
+                      value={formData.precioArriendo || ''}
+                      onChange={e => setFormData({...formData, precioArriendo: Number(e.target.value)})}
+                      placeholder="15000"
+                      className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-rose-500"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-[10px] text-slate-400 uppercase tracking-wider mb-1 block">Stock disponible</label>
+                  <input
+                    type="number"
+                    value={formData.stock || ''}
+                    onChange={e => setFormData({...formData, stock: Number(e.target.value)})}
+                    placeholder="10"
+                    className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-rose-500"
+                  />
+                </div>
+              </div>
+
+              <button
+                onClick={saveProduct}
+                disabled={!formData.nombre || !formData.categoria}
+                className="w-full py-3 bg-gradient-to-r from-emerald-500 to-emerald-400 text-slate-950 font-bold rounded-xl text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Check size={16} className="inline mr-2" />
+                {editingProduct ? 'Guardar Cambios' : 'Crear Producto'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
