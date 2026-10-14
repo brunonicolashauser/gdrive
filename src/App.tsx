@@ -35,10 +35,8 @@ const INITIAL_PRODUCTS = [
 ];
 
 const INITIAL_PLANS = [
-  { id: 1, nombre: 'Plan Faena Salmonera 30 días', descuento: 15, dias: 30, tipo: 'arriendo', descripcion: 'Arriendo mensual para faenas salmoneras (30 días)' },
-  { id: 2, nombre: 'Plan Flota Mayorista', descuento: 25, dias: 0, tipo: 'venta', descripcion: 'Descuento por volumen para compras sobre 5 unidades' },
-  { id: 3, nombre: 'Plan Arriendo Mensual Trimestral', descuento: 20, dias: 90, tipo: 'arriendo', descripcion: 'Arriendo mensual por 3 meses con mantención incluida' },
-  { id: 4, nombre: 'Plan Descuento Volumen', descuento: 10, dias: 0, tipo: 'venta', descripcion: '10% descuento compras sobre $500.000 CLP' },
+  { id: 1, nombre: 'Plan Flota Mayorista', descuento: 25, dias: 0, tipo: 'venta', descripcion: 'Descuento por volumen para compras sobre 5 unidades' },
+  { id: 2, nombre: 'Plan Descuento Volumen', descuento: 10, dias: 0, tipo: 'venta', descripcion: '10% descuento compras sobre $500.000 CLP' },
 ];
 
 const ORDENES_TALLER = [
@@ -365,7 +363,7 @@ function InicioModule({ setActive }: any) {
       <div className="grid grid-cols-2 gap-3">
         <QuickCard icon={CloudRain} title="Clima & Mareas" subtitle="SHOA / DIRECTEMAR" color="cyan" onClick={() => setActive('clima')} />
         <QuickCard icon={Gauge} title="Conversor KT" subtitle="Nudos & Brújula" color="emerald" onClick={() => setActive('convertidor')} />
-        <QuickCard icon={Package} title="Catálogo" subtitle="Equipos & Arriendo Mensual" color="amber" onClick={() => setActive('catalogo')} />
+        <QuickCard icon={Package} title="Catálogo" subtitle="Equipos de Buceo" color="amber" onClick={() => setActive('catalogo')} />
         <QuickCard icon={Wrench} title="Taller" subtitle="Prueba Hidrostática" color="rose" onClick={() => setActive('taller')} />
       </div>
 
@@ -728,9 +726,7 @@ function CatalogoModule({ cart, setCart, products }: any) {
   const [search, setSearch] = useState('');
   const [catFilter, setCatFilter] = useState('Todos');
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
-  const [modalMode, setModalMode] = useState<'comprar' | 'arrendar'>('comprar');
   const [quantity, setQuantity] = useState(1);
-  const [days, setDays] = useState(1);
   const [selectedPlan, setSelectedPlan] = useState<any>(null);
 
   const categories = ['Todos', ...Array.from(new Set(products.map(p => p.categoria)))];
@@ -745,22 +741,21 @@ function CatalogoModule({ cart, setCart, products }: any) {
     if (!selectedProduct) return;
     const item = {
       product: selectedProduct,
-      mode: modalMode,
+      mode: 'comprar',
       quantity,
-      days: modalMode === 'arrendar' ? days : 0,
+      days: 0,
       plan: selectedPlan,
       id: Date.now(),
     };
     setCart([...cart, item]);
     setSelectedProduct(null);
     setQuantity(1);
-    setDays(1);
     setSelectedPlan(null);
   };
 
   const getPrice = () => {
     if (!selectedProduct) return 0;
-    let base = modalMode === 'comprar' ? selectedProduct.precioVenta * quantity : selectedProduct.precioArriendo * days * quantity;
+    let base = selectedProduct.precioVenta * quantity;
     if (selectedPlan) base = base * (1 - selectedPlan.descuento / 100);
     return Math.round(base);
   };
@@ -799,10 +794,9 @@ function CatalogoModule({ cart, setCart, products }: any) {
                 <p className="text-[10px] text-slate-400">{p.categoria} • Stock: {p.stock}</p>
                 <div className="flex items-center gap-3 mt-1">
                   <span className="text-xs font-bold text-emerald-400">{formatCLP(p.precioVenta)}</span>
-                  {p.precioArriendo > 0 && <span className="text-[10px] text-slate-400">| Arr. Mensual: {formatCLP(p.precioArriendo * 30)}</span>}
                 </div>
               </div>
-              <button onClick={() => { setSelectedProduct(p); setModalMode('comprar'); }} className="px-3 py-1.5 bg-amber-500/10 border border-amber-500/30 rounded-lg text-amber-400 text-[11px] font-medium hover:bg-amber-500/20 transition-all">
+              <button onClick={() => setSelectedProduct(p)} className="px-3 py-1.5 bg-amber-500/10 border border-amber-500/30 rounded-lg text-amber-400 text-[11px] font-medium hover:bg-amber-500/20 transition-all">
                 Ver
               </button>
             </div>
@@ -833,19 +827,16 @@ function CatalogoModule({ cart, setCart, products }: any) {
                 </div>
               </div>
 
-              <div className="flex gap-2">
-                <button onClick={() => { setModalMode('comprar'); setSelectedPlan(null); }} className={`flex-1 py-2.5 rounded-xl text-xs font-semibold transition-all ${modalMode === 'comprar' ? 'bg-emerald-500 text-slate-950' : 'bg-slate-800 text-slate-400 border border-slate-700'}`}>
+              <div>
+                <button className="w-full py-2.5 rounded-xl text-xs font-semibold bg-emerald-500 text-slate-950">
                   💰 Comprar
-                </button>
-                <button onClick={() => setModalMode('arrendar')} className={`flex-1 py-2.5 rounded-xl text-xs font-semibold transition-all ${modalMode === 'arrendar' ? 'bg-cyan-500 text-slate-950' : 'bg-slate-800 text-slate-400 border border-slate-700'}`}>
-                  📋 Arriendo Mensual
                 </button>
               </div>
 
               <div>
-                <p className="text-[10px] text-slate-400 uppercase tracking-wider mb-2">Planes Disponibles</p>
+                <p className="text-[10px] text-slate-400 uppercase tracking-wider mb-2">Planes de Descuento</p>
                 <div className="space-y-2">
-                  {plans.filter(pl => pl.tipo === modalMode).map(pl => (
+                  {plans.filter(pl => pl.tipo === 'venta').map(pl => (
                     <button key={pl.id} onClick={() => setSelectedPlan(selectedPlan?.id === pl.id ? null : pl)} className={`w-full p-3 rounded-xl text-left transition-all ${selectedPlan?.id === pl.id ? 'bg-cyan-500/10 border border-cyan-500/30' : 'bg-slate-800 border border-slate-700'}`}>
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-medium text-white">{pl.nombre}</span>
@@ -857,25 +848,13 @@ function CatalogoModule({ cart, setCart, products }: any) {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-[10px] text-slate-400">Cantidad</label>
-                  <div className="flex items-center gap-2 mt-1">
-                    <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="w-8 h-8 rounded-lg bg-slate-800 text-white flex items-center justify-center">-</button>
-                    <span className="text-sm font-bold text-white w-8 text-center">{quantity}</span>
-                    <button onClick={() => setQuantity(quantity + 1)} className="w-8 h-8 rounded-lg bg-slate-800 text-white flex items-center justify-center">+</button>
-                  </div>
+              <div>
+                <label className="text-[10px] text-slate-400">Cantidad</label>
+                <div className="flex items-center gap-2 mt-1">
+                  <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="w-8 h-8 rounded-lg bg-slate-800 text-white flex items-center justify-center">-</button>
+                  <span className="text-sm font-bold text-white w-8 text-center">{quantity}</span>
+                  <button onClick={() => setQuantity(quantity + 1)} className="w-8 h-8 rounded-lg bg-slate-800 text-white flex items-center justify-center">+</button>
                 </div>
-                {modalMode === 'arrendar' && (
-                  <div>
-                    <label className="text-[10px] text-slate-400">Días</label>
-                    <div className="flex items-center gap-2 mt-1">
-                      <button onClick={() => setDays(Math.max(1, days - 1))} className="w-8 h-8 rounded-lg bg-slate-800 text-white flex items-center justify-center">-</button>
-                      <span className="text-sm font-bold text-white w-8 text-center">{days}</span>
-                      <button onClick={() => setDays(days + 1)} className="w-8 h-8 rounded-lg bg-slate-800 text-white flex items-center justify-center">+</button>
-                    </div>
-                  </div>
-                )}
               </div>
 
               <div className="bg-slate-800 rounded-xl p-3 border border-slate-700">
@@ -981,8 +960,7 @@ function TallerModule() {
 function AdminModule({ products, setProducts }: any) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [pin, setPin] = useState('');
-  const [plans] = useState(INITIAL_PLANS);
-  const [activeTab, setActiveTab] = useState<'productos' | 'planes'>('productos');
+
   const [showForm, setShowForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState<any>(null);
   const [formData, setFormData] = useState({
@@ -1062,77 +1040,49 @@ function AdminModule({ products, setProducts }: any) {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 gap-3">
-        <div className="bg-slate-800/50 rounded-xl p-3 border border-slate-700">
-          <p className="text-[10px] text-slate-500">Productos</p>
-          <p className="text-2xl font-bold text-white">{products.length}</p>
-        </div>
-        <div className="bg-slate-800/50 rounded-xl p-3 border border-slate-700">
-          <p className="text-[10px] text-slate-500">Planes</p>
-          <p className="text-2xl font-bold text-white">{plans.length}</p>
-        </div>
+      <div className="bg-slate-800/50 rounded-xl p-3 border border-slate-700">
+        <p className="text-[10px] text-slate-500">Total Productos</p>
+        <p className="text-2xl font-bold text-white">{products.length}</p>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-2">
-        <button onClick={() => setActiveTab('productos')} className={`flex-1 py-2 rounded-xl text-xs font-semibold transition-all ${activeTab === 'productos' ? 'bg-rose-500 text-white' : 'bg-slate-800 text-slate-400'}`}>
-          <Package size={14} className="inline mr-1" />Productos
-        </button>
-        <button onClick={() => setActiveTab('planes')} className={`flex-1 py-2 rounded-xl text-xs font-semibold transition-all ${activeTab === 'planes' ? 'bg-amber-500 text-slate-950' : 'bg-slate-800 text-slate-400'}`}>
-          <Percent size={14} className="inline mr-1" />Planes
-        </button>
+      {/* Title */}
+      <div className="flex items-center gap-2">
+        <Package size={16} className="text-rose-400" />
+        <h3 className="text-sm font-semibold text-white">Gestión de Productos</h3>
       </div>
 
-      {activeTab === 'productos' && (
-        <div className="space-y-3">
-          <button onClick={() => { setShowForm(true); setEditingProduct(null); setFormData({ nombre: '', categoria: '', precioVenta: 0, precioArriendo: 0, stock: 0, imagen: '', descripcion: '' }); }} className="w-full py-2.5 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-emerald-400 text-xs font-semibold">
-            <Plus size={14} className="inline mr-1" />Nuevo Producto
-          </button>
+      <div className="space-y-3">
+        <button onClick={() => { setShowForm(true); setEditingProduct(null); setFormData({ nombre: '', categoria: '', precioVenta: 0, precioArriendo: 0, stock: 0, imagen: '', descripcion: '' }); }} className="w-full py-2.5 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-emerald-400 text-xs font-semibold">
+          <Plus size={14} className="inline mr-1" />Nuevo Producto
+        </button>
 
-          {products.map(p => (
-            <div key={p.id} className="bg-slate-800/50 rounded-xl p-3 border border-slate-700">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-lg bg-slate-900 overflow-hidden flex-shrink-0 flex items-center justify-center">
-                  {p.imagen && p.imagen.startsWith('http') ? (
-                    <img src={p.imagen} alt={p.nombre} className="w-full h-full object-cover" />
-                  ) : (
-                    <span className="text-lg">{p.imagen || '📦'}</span>
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold text-white truncate">{p.nombre}</p>
-                  <p className="text-[10px] text-slate-400">{p.categoria} • Stock: {p.stock}</p>
-                  <p className="text-[10px] text-emerald-400">{formatCLP(p.precioVenta)}</p>
-                </div>
-                <div className="flex gap-1">
-                  <button onClick={() => editProduct(p)} className="p-1.5 rounded-lg bg-slate-700 text-slate-400 hover:text-white">
-                    <Edit size={12} />
-                  </button>
-                  <button onClick={() => deleteProduct(p.id)} className="p-1.5 rounded-lg bg-rose-500/20 text-rose-400 hover:bg-rose-500/30">
-                    <Trash2 size={12} />
-                  </button>
-                </div>
+        {products.map(p => (
+          <div key={p.id} className="bg-slate-800/50 rounded-xl p-3 border border-slate-700">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-lg bg-slate-900 overflow-hidden flex-shrink-0 flex items-center justify-center">
+                {p.imagen && p.imagen.startsWith('http') ? (
+                  <img src={p.imagen} alt={p.nombre} className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-lg">{p.imagen || '📦'}</span>
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-semibold text-white truncate">{p.nombre}</p>
+                <p className="text-[10px] text-slate-400">{p.categoria} • Stock: {p.stock}</p>
+                <p className="text-[10px] text-emerald-400">{formatCLP(p.precioVenta)}</p>
+              </div>
+              <div className="flex gap-1">
+                <button onClick={() => editProduct(p)} className="p-1.5 rounded-lg bg-slate-700 text-slate-400 hover:text-white">
+                  <Edit size={12} />
+                </button>
+                <button onClick={() => deleteProduct(p.id)} className="p-1.5 rounded-lg bg-rose-500/20 text-rose-400 hover:bg-rose-500/30">
+                  <Trash2 size={12} />
+                </button>
               </div>
             </div>
-          ))}
-        </div>
-      )}
-
-      {activeTab === 'planes' && (
-        <div className="space-y-3">
-          {plans.map(p => (
-            <div key={p.id} className="bg-slate-800/50 rounded-xl p-3 border border-slate-700">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-semibold text-white">{p.nombre}</p>
-                  <p className="text-[10px] text-slate-400">{p.tipo === 'venta' ? '💰 Venta' : '📋 Arriendo Mensual'} • {p.dias > 0 ? `${p.dias} días` : 'Sin límite'}</p>
-                  <p className="text-[10px] text-amber-400">Descuento: {p.descuento}%</p>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+          </div>
+        ))}
+      </div>
 
       {/* Product Form Modal */}
       {showForm && (
@@ -1196,27 +1146,15 @@ function AdminModule({ products, setProducts }: any) {
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-[10px] text-slate-400 uppercase tracking-wider mb-1 block">Precio Venta (CLP)</label>
-                    <input
-                      type="number"
-                      value={formData.precioVenta || ''}
-                      onChange={e => setFormData({...formData, precioVenta: Number(e.target.value)})}
-                      placeholder="450000"
-                      className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-rose-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[10px] text-slate-400 uppercase tracking-wider mb-1 block">Precio Arriendo Mensual</label>
-                    <input
-                      type="number"
-                      value={formData.precioArriendo || ''}
-                      onChange={e => setFormData({...formData, precioArriendo: Number(e.target.value)})}
-                      placeholder="15000"
-                      className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-rose-500"
-                    />
-                  </div>
+                <div>
+                  <label className="text-[10px] text-slate-400 uppercase tracking-wider mb-1 block">Precio Venta (CLP)</label>
+                  <input
+                    type="number"
+                    value={formData.precioVenta || ''}
+                    onChange={e => setFormData({...formData, precioVenta: Number(e.target.value)})}
+                    placeholder="450000"
+                    className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-rose-500"
+                  />
                 </div>
 
                 <div>
@@ -1250,7 +1188,7 @@ function AdminModule({ products, setProducts }: any) {
 // ==================== CART MODAL ====================
 function CartModal({ cart, setCart, onClose }: any) {
   const total = cart.reduce((sum: number, item: any) => {
-    let price = item.mode === 'comprar' ? item.product.precioVenta * item.quantity : item.product.precioArriendo * item.days * item.quantity;
+    let price = item.product.precioVenta * item.quantity;
     if (item.plan) price = price * (1 - item.plan.descuento / 100);
     return sum + Math.round(price);
   }, 0);
@@ -1263,11 +1201,10 @@ function CartModal({ cart, setCart, onClose }: any) {
     let msg = `🤿 *COTIZACIÓN GERDIVER CHILE*\n`;
     msg += `━━━━━━━━━━━━━━━━━━\n\n`;
     cart.forEach((item: any, i: number) => {
-      const price = item.mode === 'comprar' ? item.product.precioVenta * item.quantity : item.product.precioArriendo * item.days * item.quantity;
+      const price = item.product.precioVenta * item.quantity;
       const finalPrice = item.plan ? price * (1 - item.plan.descuento / 100) : price;
       msg += `${i + 1}. *${item.product.nombre}*\n`;
-      msg += `   Modalidad: ${item.mode === 'comprar' ? '💰 Compra' : '📋 Arriendo Mensual'}\n`;
-      msg += `   Cantidad: ${item.quantity}${item.mode === 'arrendar' ? ` • Días: ${item.days}` : ''}\n`;
+      msg += `   Cantidad: ${item.quantity}\n`;
       if (item.plan) msg += `   Plan: ${item.plan.nombre} (-${item.plan.descuento}%)\n`;
       msg += `   Subtotal: ${formatCLP(Math.round(finalPrice))}\n\n`;
     });
@@ -1302,7 +1239,7 @@ function CartModal({ cart, setCart, onClose }: any) {
             <>
               <div className="space-y-2">
                 {cart.map((item: any) => {
-                  const price = item.mode === 'comprar' ? item.product.precioVenta * item.quantity : item.product.precioArriendo * item.days * item.quantity;
+                  const price = item.product.precioVenta * item.quantity;
                   const finalPrice = item.plan ? price * (1 - item.plan.descuento / 100) : price;
                   return (
                     <div key={item.id} className="bg-slate-800/50 rounded-xl p-3 border border-slate-700">
@@ -1317,7 +1254,7 @@ function CartModal({ cart, setCart, onClose }: any) {
                           </div>
                           <div>
                             <p className="text-xs font-semibold text-white">{item.product.nombre}</p>
-                            <p className="text-[10px] text-slate-400">{item.mode === 'comprar' ? '💰 Compra' : '📋 Arriendo Mensual'} • Cant: {item.quantity}{item.mode === 'arrendar' ? ` • ${item.days} días` : ''}</p>
+                            <p className="text-[10px] text-slate-400">💰 Compra • Cant: {item.quantity}</p>
                             {item.plan && <p className="text-[10px] text-cyan-400">Plan: {item.plan.nombre}</p>}
                           </div>
                         </div>
