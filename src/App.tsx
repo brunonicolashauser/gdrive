@@ -35,9 +35,9 @@ const INITIAL_PRODUCTS = [
 ];
 
 const INITIAL_PLANS = [
-  { id: 1, nombre: 'Plan Faena Salmonera 30 días', descuento: 15, dias: 30, tipo: 'arriendo', descripcion: 'Arriendo mensual para faenas salmoneras' },
+  { id: 1, nombre: 'Plan Faena Salmonera 30 días', descuento: 15, dias: 30, tipo: 'arriendo', descripcion: 'Arriendo mensual para faenas salmoneras (30 días)' },
   { id: 2, nombre: 'Plan Flota Mayorista', descuento: 25, dias: 0, tipo: 'venta', descripcion: 'Descuento por volumen para compras sobre 5 unidades' },
-  { id: 3, nombre: 'Plan Arriendo Trimestral', descuento: 20, dias: 90, tipo: 'arriendo', descripcion: 'Arriendo trimestral con mantención incluida' },
+  { id: 3, nombre: 'Plan Arriendo Mensual Trimestral', descuento: 20, dias: 90, tipo: 'arriendo', descripcion: 'Arriendo mensual por 3 meses con mantención incluida' },
   { id: 4, nombre: 'Plan Descuento Volumen', descuento: 10, dias: 0, tipo: 'venta', descripcion: '10% descuento compras sobre $500.000 CLP' },
 ];
 
@@ -365,7 +365,7 @@ function InicioModule({ setActive }: any) {
       <div className="grid grid-cols-2 gap-3">
         <QuickCard icon={CloudRain} title="Clima & Mareas" subtitle="SHOA / DIRECTEMAR" color="cyan" onClick={() => setActive('clima')} />
         <QuickCard icon={Gauge} title="Conversor KT" subtitle="Nudos & Brújula" color="emerald" onClick={() => setActive('convertidor')} />
-        <QuickCard icon={Package} title="Catálogo" subtitle="Equipos & Arriendo" color="amber" onClick={() => setActive('catalogo')} />
+        <QuickCard icon={Package} title="Catálogo" subtitle="Equipos & Arriendo Mensual" color="amber" onClick={() => setActive('catalogo')} />
         <QuickCard icon={Wrench} title="Taller" subtitle="Prueba Hidrostática" color="rose" onClick={() => setActive('taller')} />
       </div>
 
@@ -799,7 +799,7 @@ function CatalogoModule({ cart, setCart, products }: any) {
                 <p className="text-[10px] text-slate-400">{p.categoria} • Stock: {p.stock}</p>
                 <div className="flex items-center gap-3 mt-1">
                   <span className="text-xs font-bold text-emerald-400">{formatCLP(p.precioVenta)}</span>
-                  {p.precioArriendo > 0 && <span className="text-[10px] text-slate-400">| Arr: {formatCLP(p.precioArriendo)}/día</span>}
+                  {p.precioArriendo > 0 && <span className="text-[10px] text-slate-400">| Arr. Mensual: {formatCLP(p.precioArriendo * 30)}</span>}
                 </div>
               </div>
               <button onClick={() => { setSelectedProduct(p); setModalMode('comprar'); }} className="px-3 py-1.5 bg-amber-500/10 border border-amber-500/30 rounded-lg text-amber-400 text-[11px] font-medium hover:bg-amber-500/20 transition-all">
@@ -838,7 +838,7 @@ function CatalogoModule({ cart, setCart, products }: any) {
                   💰 Comprar
                 </button>
                 <button onClick={() => setModalMode('arrendar')} className={`flex-1 py-2.5 rounded-xl text-xs font-semibold transition-all ${modalMode === 'arrendar' ? 'bg-cyan-500 text-slate-950' : 'bg-slate-800 text-slate-400 border border-slate-700'}`}>
-                  📋 Arrendar
+                  📋 Arriendo Mensual
                 </button>
               </div>
 
@@ -1125,7 +1125,7 @@ function AdminModule({ products, setProducts }: any) {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs font-semibold text-white">{p.nombre}</p>
-                  <p className="text-[10px] text-slate-400">{p.tipo === 'venta' ? '💰 Venta' : '📋 Arriendo'} • {p.dias > 0 ? `${p.dias} días` : 'Sin límite'}</p>
+                  <p className="text-[10px] text-slate-400">{p.tipo === 'venta' ? '💰 Venta' : '📋 Arriendo Mensual'} • {p.dias > 0 ? `${p.dias} días` : 'Sin límite'}</p>
                   <p className="text-[10px] text-amber-400">Descuento: {p.descuento}%</p>
                 </div>
               </div>
@@ -1208,7 +1208,7 @@ function AdminModule({ products, setProducts }: any) {
                     />
                   </div>
                   <div>
-                    <label className="text-[10px] text-slate-400 uppercase tracking-wider mb-1 block">Precio Arriendo/día</label>
+                    <label className="text-[10px] text-slate-400 uppercase tracking-wider mb-1 block">Precio Arriendo Mensual</label>
                     <input
                       type="number"
                       value={formData.precioArriendo || ''}
@@ -1266,7 +1266,7 @@ function CartModal({ cart, setCart, onClose }: any) {
       const price = item.mode === 'comprar' ? item.product.precioVenta * item.quantity : item.product.precioArriendo * item.days * item.quantity;
       const finalPrice = item.plan ? price * (1 - item.plan.descuento / 100) : price;
       msg += `${i + 1}. *${item.product.nombre}*\n`;
-      msg += `   Modalidad: ${item.mode === 'comprar' ? '💰 Compra' : '📋 Arriendo'}\n`;
+      msg += `   Modalidad: ${item.mode === 'comprar' ? '💰 Compra' : '📋 Arriendo Mensual'}\n`;
       msg += `   Cantidad: ${item.quantity}${item.mode === 'arrendar' ? ` • Días: ${item.days}` : ''}\n`;
       if (item.plan) msg += `   Plan: ${item.plan.nombre} (-${item.plan.descuento}%)\n`;
       msg += `   Subtotal: ${formatCLP(Math.round(finalPrice))}\n\n`;
@@ -1317,7 +1317,7 @@ function CartModal({ cart, setCart, onClose }: any) {
                           </div>
                           <div>
                             <p className="text-xs font-semibold text-white">{item.product.nombre}</p>
-                            <p className="text-[10px] text-slate-400">{item.mode === 'comprar' ? '💰 Compra' : '📋 Arriendo'} • Cant: {item.quantity}{item.mode === 'arrendar' ? ` • ${item.days} días` : ''}</p>
+                            <p className="text-[10px] text-slate-400">{item.mode === 'comprar' ? '💰 Compra' : '📋 Arriendo Mensual'} • Cant: {item.quantity}{item.mode === 'arrendar' ? ` • ${item.days} días` : ''}</p>
                             {item.plan && <p className="text-[10px] text-cyan-400">Plan: {item.plan.nombre}</p>}
                           </div>
                         </div>
