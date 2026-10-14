@@ -597,23 +597,118 @@ function ConversorModule() {
   const [nudos, setNudos] = useState(15);
   const [compassAngle, setCompassAngle] = useState(0);
   const [useGyroscope, setUseGyroscope] = useState(false);
+  const [permissionGranted, setPermissionGranted] = useState(false);
+  const [permissionError, setPermissionError] = useState('');
+  const [location, setLocation] = useState<{ lat: number; lon: number; alt: number | null; accuracy: number } | null>(null);
+  const [locationError, setLocationError] = useState('');
+  const [locationLoading, setLocationLoading] = useState(false);
   const beaufort = getBeaufort(nudos);
   const kmh = (nudos * 1.852).toFixed(1);
   const ms = (nudos * 0.5144).toFixed(2);
 
-  useEffect(() => {
-    if (useGyroscope) {
-      const handler = (e: any) => {
-        if (e.webkitCompassHeading !== undefined) {
-          setCompassAngle(Math.round(e.webkitCompassHeading));
-        } else if (e.alpha !== null) {
-          setCompassAngle(Math.round(360 - e.alpha));
+  // Request orientation permission (iOS 13+)
+  const requestOrientationPermission = async () => {
+    setPermissionError('');
+    
+    // Check if DeviceOrientationEvent is available
+    if (typeof (DeviceOrientationEvent as any).requestPermission === 'function') {
+      try {
+        const permission = await (DeviceOrientationEvent as any).requestPermission();
+        if (permission === 'granted') {
+          setPermissionGranted(true);
+          setUseGyroscope(true);
+        } else {
+          setPermissionError('Permiso denegado. Habilite los sensores de movimiento en la configuración del navegador.');
         }
-      };
-      window.addEventListener('deviceorientation', handler);
-      return () => window.removeEventListener('deviceorientation', handler);
+      } catch (err) {
+        setPermissionError('Error al solicitar permiso. Use HTTPS o un dispositivo compatible.');
+      }
+    } else {
+      // Android or older iOS - no permission needed
+      setPermissionGranted(true);
+      setUseGyroscope(true);
     }
-  }, [useGyroscope]);
+  };
+
+  // Toggle gyroscope
+  const toggleGyroscope = () => {
+    if (useGyroscope) {
+      setUseGyroscope(false);
+    } else {
+      requestOrientationPermission();
+    }
+  };
+
+  // Device orientation handler
+  useEffect(() => {
+    if (useGyroscope && permissionGranted) {
+      const handler = (e: any) => {
+        let heading = 0;
+        
+        // iOS: use webkitCompassHeading (true north)
+        if (e.webkitCompassHeading !== undefined) {
+          heading = e.webkitCompassHeading;
+        } 
+        // Android/Other: use alpha with screen orientation compensation
+        else if (e.alpha !== null) {
+          const screenOrientation = window.screen.orientation?.angle || 0;
+          heading = (360 - e.alpha - screenOrientation) % 360;
+          if (heading < 0) heading += 360;
+        }
+        
+        setCompassAngle(Math.round(heading));
+      };
+      
+      window.addEventListener('deviceorientation', handler, true);
+      return () => window.removeEventListener('deviceorientation', handler, true);
+    }
+  }, [useGyroscope, permissionGranted]);
+
+  // Get GPS location
+  useEffect(() => {
+    if (!navigator.geolocation) {
+      setLocationError('Geolocalización no disponible en este navegador');
+      return;
+    }
+
+    setLocationLoading(true);
+    
+    const watchId = navigator.geolocation.watchPosition(
+      (position) => {
+        setLocation({
+          lat: position.coords.latitude,
+          lon: position.coords.longitude,
+          alt: position.coords.altitude,
+          accuracy: position.coords.accuracy
+        });
+        setLocationLoading(false);
+        setLocationError('');
+      },
+      (error) => {
+        setLocationLoading(false);
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            setLocationError('Permiso de ubicación denegado');
+            break;
+          case error.POSITION_UNAVAILABLE:
+            setLocationError('Ubicación no disponible');
+            break;
+          case error.TIMEOUT:
+            setLocationError('Tiempo de espera agotado');
+            break;
+          default:
+            setLocationError('Error desconocido');
+        }
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
+      }
+    );
+
+    return () => navigator.geolocation.clearWatch(watchId);
+  }, []);
 
   return (
     <div className="p-4 space-y-4">
@@ -622,6 +717,7 @@ function ConversorModule() {
         <h2 className="text-lg font-bold text-white">Conversor & Brújula</h2>
       </div>
 
+      {/* Knots Converter */}
       <div className="bg-slate-800/50 rounded-2xl p-4 border border-slate-700 space-y-4">
         <div className="flex items-center gap-2">
           <Zap size={16} className="text-amber-400" />
@@ -669,50 +765,206 @@ function ConversorModule() {
         </div>
       </div>
 
+      {/* Compass Section */}
       <div className="bg-slate-800/50 rounded-2xl p-4 border border-slate-700 space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Compass size={16} className="text-cyan-400" />
             <span className="text-sm font-semibold text-white">Brújula Digital</span>
           </div>
-          <button onClick={() => setUseGyroscope(!useGyroscope)} className={`px-2 py-1 rounded-lg text-[10px] font-medium transition-all ${useGyroscope ? 'bg-emerald-500 text-slate-950' : 'bg-slate-700 text-slate-400'}`}>
-            {useGyroscope ? '📱 Giroscopio ON' : '📱 Giroscopio OFF'}
+          <button 
+            onClick={toggleGyroscope} 
+            className={`px-3 py-1.5 rounded-lg text-[10px] font-medium transition-all ${
+              useGyroscope 
+                ? 'bg-emerald-500 text-slate-950' 
+                : 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/30'
+            }`}
+          >
+            {useGyroscope ? '✓ Activa' : '📱 Activar Sensor'}
           </button>
         </div>
 
+        {/* Permission Error */}
+        {permissionError && (
+          <div className="bg-rose-500/10 border border-rose-500/30 rounded-xl p-3">
+            <p className="text-xs text-rose-400">{permissionError}</p>
+          </div>
+        )}
+
+        {/* Compass Display */}
         <div className="flex justify-center py-4">
-          <div className="relative w-48 h-48">
-            <div className="absolute inset-0 rounded-full border-4 border-slate-700 bg-slate-900/80" style={{ transform: `rotate(-${compassAngle}deg)`, transition: useGyroscope ? 'none' : 'transform 0.3s ease' }}>
+          <div className="relative w-64 h-64">
+            {/* Outer ring with degree marks */}
+            <div 
+              className="absolute inset-0 rounded-full border-4 border-slate-700 bg-slate-900/80"
+              style={{ 
+                transform: `rotate(-${compassAngle}deg)`, 
+                transition: useGyroscope ? 'transform 0.1s ease-out' : 'transform 0.3s ease' 
+              }}
+            >
+              {/* Degree marks every 30 degrees */}
+              {[0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330].map(deg => {
+                const rad = (deg - 90) * (Math.PI / 180);
+                const isCardinal = deg % 90 === 0;
+                const isIntercardinal = deg % 45 === 0;
+                const innerRadius = isCardinal ? 38 : isIntercardinal ? 40 : 42;
+                const outerRadius = 45;
+                
+                const x1 = 50 + innerRadius * Math.cos(rad);
+                const y1 = 50 + innerRadius * Math.sin(rad);
+                const x2 = 50 + outerRadius * Math.cos(rad);
+                const y2 = 50 + outerRadius * Math.sin(rad);
+                
+                return (
+                  <div
+                    key={deg}
+                    className="absolute"
+                    style={{
+                      left: `${x1}%`,
+                      top: `${y1}%`,
+                      width: `${Math.sqrt((x2-x1)**2 + (y2-y1)**2)}%`,
+                      height: isCardinal ? '3px' : '2px',
+                      background: isCardinal ? '#22d3ee' : isIntercardinal ? '#64748b' : '#475569',
+                      transform: `rotate(${deg}deg)`,
+                      transformOrigin: 'left center'
+                    }}
+                  />
+                );
+              })}
+              
+              {/* Cardinal directions */}
               {['N', 'E', 'S', 'O'].map((dir, i) => {
                 const angle = i * 90;
                 const rad = (angle - 90) * (Math.PI / 180);
-                const x = 50 + 38 * Math.cos(rad);
-                const y = 50 + 38 * Math.sin(rad);
-                return <span key={dir} className="absolute text-xs font-bold" style={{ left: `${x}%`, top: `${y}%`, transform: 'translate(-50%, -50%)', color: dir === 'N' ? '#f43f5e' : '#94a3b8' }}>{dir}</span>;
+                const x = 50 + 32 * Math.cos(rad);
+                const y = 50 + 32 * Math.sin(rad);
+                return (
+                  <span 
+                    key={dir} 
+                    className="absolute text-sm font-bold" 
+                    style={{ 
+                      left: `${x}%`, 
+                      top: `${y}%`, 
+                      transform: 'translate(-50%, -50%)', 
+                      color: dir === 'N' ? '#f43f5e' : '#94a3b8' 
+                    }}
+                  >
+                    {dir}
+                  </span>
+                );
               })}
             </div>
+            
+            {/* Center display */}
             <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-16 h-16 rounded-full bg-slate-800 border-2 border-cyan-400/50 flex items-center justify-center shadow-lg shadow-cyan-400/20">
+              <div className="w-20 h-20 rounded-full bg-slate-800 border-2 border-cyan-400/50 flex items-center justify-center shadow-lg shadow-cyan-400/20">
                 <div className="text-center">
-                  <p className="text-lg font-bold text-cyan-400">{compassAngle}°</p>
-                  <p className="text-[8px] text-slate-400">{getDireccionCardinal(compassAngle)}</p>
+                  <p className="text-xl font-bold text-cyan-400">{compassAngle}°</p>
+                  <p className="text-[10px] text-slate-400 font-medium">{getDireccionCardinal(compassAngle)}</p>
                 </div>
               </div>
             </div>
+            
+            {/* Top pointer */}
             <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1">
-              <div className="w-0 h-0 border-l-[6px] border-r-[6px] border-t-[10px] border-l-transparent border-r-transparent border-t-rose-500" />
+              <div className="w-0 h-0 border-l-[8px] border-r-[8px] border-t-[12px] border-l-transparent border-r-transparent border-t-rose-500 drop-shadow-lg" />
             </div>
           </div>
         </div>
 
+        {/* Manual control (when gyroscope is off) */}
         {!useGyroscope && (
           <div>
             <label className="text-[10px] text-slate-400 uppercase tracking-wider">Control Manual</label>
-            <input type="range" min="0" max="360" value={compassAngle} onChange={e => setCompassAngle(Number(e.target.value))} className="w-full mt-2 accent-cyan-400" />
+            <input 
+              type="range" 
+              min="0" 
+              max="360" 
+              value={compassAngle} 
+              onChange={e => setCompassAngle(Number(e.target.value))} 
+              className="w-full mt-2 accent-cyan-400" 
+            />
             <div className="flex justify-between mt-1">
               <span className="text-[10px] text-slate-500">0°</span>
               <span className="text-[10px] text-slate-500">360°</span>
             </div>
+          </div>
+        )}
+
+        {/* Sensor status */}
+        <div className="bg-slate-900/50 rounded-xl p-3">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] text-slate-400">Estado del Sensor</span>
+            <div className="flex items-center gap-2">
+              <div className={`w-2 h-2 rounded-full ${useGyroscope ? 'bg-emerald-400 animate-pulse' : 'bg-slate-600'}`} />
+              <span className="text-[10px] text-slate-300">
+                {useGyroscope ? 'Activo' : 'Inactivo'}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* GPS Location Section */}
+      <div className="bg-slate-800/50 rounded-2xl p-4 border border-slate-700 space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <MapPin size={16} className="text-rose-400" />
+            <span className="text-sm font-semibold text-white">Coordenadas GPS</span>
+          </div>
+          {locationLoading && (
+            <div className="flex items-center gap-1">
+              <div className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse" />
+              <span className="text-[10px] text-cyan-400">Obteniendo...</span>
+            </div>
+          )}
+        </div>
+
+        {locationError ? (
+          <div className="bg-rose-500/10 border border-rose-500/30 rounded-xl p-3">
+            <p className="text-xs text-rose-400">{locationError}</p>
+          </div>
+        ) : location ? (
+          <div className="space-y-2">
+            <div className="grid grid-cols-2 gap-2">
+              <div className="bg-slate-900/50 rounded-xl p-3">
+                <p className="text-[9px] text-slate-500 uppercase mb-1">Latitud</p>
+                <p className="text-sm font-bold text-white">{location.lat.toFixed(6)}°</p>
+                <p className="text-[9px] text-slate-400">{location.lat >= 0 ? 'Norte' : 'Sur'}</p>
+              </div>
+              <div className="bg-slate-900/50 rounded-xl p-3">
+                <p className="text-[9px] text-slate-500 uppercase mb-1">Longitud</p>
+                <p className="text-sm font-bold text-white">{location.lon.toFixed(6)}°</p>
+                <p className="text-[9px] text-slate-400">{location.lon >= 0 ? 'Este' : 'Oeste'}</p>
+              </div>
+            </div>
+            
+            {location.alt !== null && (
+              <div className="bg-slate-900/50 rounded-xl p-3">
+                <p className="text-[9px] text-slate-500 uppercase mb-1">Altitud</p>
+                <p className="text-sm font-bold text-white">{location.alt.toFixed(1)} m</p>
+              </div>
+            )}
+            
+            <div className="bg-slate-900/50 rounded-xl p-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-[9px] text-slate-500 uppercase mb-1">Precisión GPS</p>
+                  <p className="text-sm font-bold text-emerald-400">±{location.accuracy.toFixed(0)} m</p>
+                </div>
+                <div className={`px-2 py-1 rounded-lg text-[9px] font-medium ${
+                  location.accuracy < 10 ? 'bg-emerald-500/20 text-emerald-400' :
+                  location.accuracy < 50 ? 'bg-amber-500/20 text-amber-400' :
+                  'bg-rose-500/20 text-rose-400'
+                }`}>
+                  {location.accuracy < 10 ? 'Alta' : location.accuracy < 50 ? 'Media' : 'Baja'}
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="bg-slate-900/50 rounded-xl p-3 text-center">
+            <p className="text-xs text-slate-500">Esperando señal GPS...</p>
           </div>
         )}
       </div>
