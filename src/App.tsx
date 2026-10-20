@@ -8,20 +8,7 @@ import {
 } from 'lucide-react';
 
 // ==================== DATA ====================
-const PUERTOS_DATA = [
-  { id: 1, nombre: 'Puerto Montt', region: 'Los Lagos', lat: -41.47, lon: -72.94, esSalmonero: true, temp: 12, viento: 15, dirViento: 225, rafagas: 28, estadoMar: 'Picado', oleaje: 1.2, lluvia: false, mareas: [{hora:'06:23',tipo:'Pleamar',altura:3.8},{hora:'12:45',tipo:'Bajamar',altura:0.9},{hora:'18:52',tipo:'Pleamar',altura:4.1},{hora:'01:10',tipo:'Bajamar',altura:0.7}] },
-  { id: 2, nombre: 'Ancud', region: 'Los Lagos', lat: -41.85, lon: -73.83, esSalmonero: true, temp: 11, viento: 22, dirViento: 270, rafagas: 35, estadoMar: 'Agitado', oleaje: 2.1, lluvia: true, mareas: [{hora:'06:40',tipo:'Pleamar',altura:3.6},{hora:'13:02',tipo:'Bajamar',altura:1.1},{hora:'19:15',tipo:'Pleamar',altura:3.9},{hora:'01:28',tipo:'Bajamar',altura:0.8}] },
-  { id: 3, nombre: 'Castro', region: 'Los Lagos', lat: -42.48, lon: -73.77, esSalmonero: true, temp: 10, viento: 18, dirViento: 315, rafagas: 30, estadoMar: 'Marejada', oleaje: 1.8, lluvia: true, mareas: [{hora:'06:55',tipo:'Pleamar',altura:3.5},{hora:'13:18',tipo:'Bajamar',altura:1.0},{hora:'19:30',tipo:'Pleamar',altura:3.7},{hora:'01:42',tipo:'Bajamar',altura:0.9}] },
-  { id: 4, nombre: 'Quellón', region: 'Los Lagos', lat: -43.11, lon: -73.61, esSalmonero: true, temp: 9, viento: 25, dirViento: 200, rafagas: 40, estadoMar: 'Fuerte Marejada', oleaje: 2.5, lluvia: false, mareas: [{hora:'07:10',tipo:'Pleamar',altura:3.4},{hora:'13:35',tipo:'Bajamar',altura:1.2},{hora:'19:48',tipo:'Pleamar',altura:3.6},{hora:'01:58',tipo:'Bajamar',altura:0.8}] },
-  { id: 5, nombre: 'Chaitén', region: 'Los Lagos', lat: -42.92, lon: -72.64, esSalmonero: true, temp: 11, viento: 12, dirViento: 180, rafagas: 20, estadoMar: 'Rizado', oleaje: 0.8, lluvia: false, mareas: [{hora:'06:15',tipo:'Pleamar',altura:3.2},{hora:'12:30',tipo:'Bajamar',altura:0.9},{hora:'18:40',tipo:'Pleamar',altura:3.5},{hora:'00:55',tipo:'Bajamar',altura:0.7}] },
-  { id: 6, nombre: 'Melinka', region: 'Aysén', lat: -43.89, lon: -73.73, esSalmonero: true, temp: 8, viento: 30, dirViento: 250, rafagas: 45, estadoMar: 'Gruesa', oleaje: 3.2, lluvia: true, mareas: [{hora:'07:25',tipo:'Pleamar',altura:3.1},{hora:'13:50',tipo:'Bajamar',altura:1.3},{hora:'20:05',tipo:'Pleamar',altura:3.3},{hora:'02:15',tipo:'Bajamar',altura:0.9}] },
-  { id: 7, nombre: 'Puerto Cisnes', region: 'Aysén', lat: -44.73, lon: -72.69, esSalmonero: false, temp: 7, viento: 20, dirViento: 290, rafagas: 32, estadoMar: 'Agitado', oleaje: 2.0, lluvia: false, mareas: [{hora:'07:40',tipo:'Pleamar',altura:3.0},{hora:'14:05',tipo:'Bajamar',altura:1.1},{hora:'20:22',tipo:'Pleamar',altura:3.2},{hora:'02:30',tipo:'Bajamar',altura:0.8}] },
-  { id: 8, nombre: 'Puerto Chacabuco', region: 'Aysén', lat: -45.48, lon: -72.33, esSalmonero: false, temp: 6, viento: 14, dirViento: 160, rafagas: 22, estadoMar: 'Marejada', oleaje: 1.5, lluvia: false, mareas: [{hora:'07:55',tipo:'Pleamar',altura:2.9},{hora:'14:20',tipo:'Bajamar',altura:1.0},{hora:'20:38',tipo:'Pleamar',altura:3.1},{hora:'02:48',tipo:'Bajamar',altura:0.7}] },
-  { id: 9, nombre: 'Caleta Tortel', region: 'Aysén', lat: -47.78, lon: -73.56, esSalmonero: false, temp: 5, viento: 28, dirViento: 240, rafagas: 42, estadoMar: 'Gruesa', oleaje: 3.0, lluvia: true, mareas: [{hora:'08:10',tipo:'Pleamar',altura:2.8},{hora:'14:38',tipo:'Bajamar',altura:1.2},{hora:'20:55',tipo:'Pleamar',altura:3.0},{hora:'03:05',tipo:'Bajamar',altura:0.9}] },
-  { id: 10, nombre: 'Puerto Natales', region: 'Magallanes', lat: -51.73, lon: -72.51, esSalmonero: false, temp: 4, viento: 35, dirViento: 270, rafagas: 50, estadoMar: 'Gruesa', oleaje: 3.5, lluvia: false, mareas: [{hora:'08:25',tipo:'Pleamar',altura:4.2},{hora:'14:55',tipo:'Bajamar',altura:0.8},{hora:'21:10',tipo:'Pleamar',altura:4.5},{hora:'03:22',tipo:'Bajamar',altura:0.6}] },
-  { id: 11, nombre: 'Punta Arenas', region: 'Magallanes', lat: -53.16, lon: -70.91, esSalmonero: false, temp: 3, viento: 40, dirViento: 285, rafagas: 55, estadoMar: 'Tempestuoso', oleaje: 4.0, lluvia: false, mareas: [{hora:'08:40',tipo:'Pleamar',altura:4.5},{hora:'15:12',tipo:'Bajamar',altura:0.7},{hora:'21:28',tipo:'Pleamar',altura:4.8},{hora:'03:40',tipo:'Bajamar',altura:0.5}] },
-  { id: 12, nombre: 'Puerto Williams', region: 'Magallanes', lat: -54.93, lon: -67.61, esSalmonero: false, temp: 1, viento: 45, dirViento: 300, rafagas: 60, estadoMar: 'Tempestuoso', oleaje: 4.5, lluvia: true, mareas: [{hora:'08:55',tipo:'Pleamar',altura:3.8},{hora:'15:30',tipo:'Bajamar',altura:0.9},{hora:'21:45',tipo:'Pleamar',altura:4.0},{hora:'03:58',tipo:'Bajamar',altura:0.7}] },
-];
+
 
 const INITIAL_PRODUCTS = [
   { id: 1, nombre: 'Traje Neopreno 7mm Henderson', categoria: 'Trajes', precioVenta: 450000, stock: 12, imagen: '🤿', descripcion: 'Traje húmedo 7mm para aguas frías del sur de Chile.' },
@@ -396,31 +383,173 @@ function AlertItem({ severity, text }: any) {
 
 // ==================== CLIMA MODULE ====================
 function ClimaModule() {
-  const [selectedPuerto, setSelectedPuerto] = useState(PUERTOS_DATA[0]);
+  const PUERTOS = [
+    { id: 1, nombre: 'Puerto Montt', region: 'Los Lagos', lat: -41.47, lon: -72.94, esSalmonero: true },
+    { id: 2, nombre: 'Ancud', region: 'Los Lagos', lat: -41.85, lon: -73.83, esSalmonero: true },
+    { id: 3, nombre: 'Castro', region: 'Los Lagos', lat: -42.48, lon: -73.77, esSalmonero: true },
+    { id: 4, nombre: 'Quellón', region: 'Los Lagos', lat: -43.11, lon: -73.61, esSalmonero: true },
+    { id: 5, nombre: 'Chaitén', region: 'Los Lagos', lat: -42.92, lon: -72.64, esSalmonero: true },
+    { id: 6, nombre: 'Melinka', region: 'Aysén', lat: -43.89, lon: -73.73, esSalmonero: true },
+    { id: 7, nombre: 'Puerto Cisnes', region: 'Aysén', lat: -44.73, lon: -72.69, esSalmonero: false },
+    { id: 8, nombre: 'Puerto Chacabuco', region: 'Aysén', lat: -45.48, lon: -72.33, esSalmonero: false },
+    { id: 9, nombre: 'Caleta Tortel', region: 'Aysén', lat: -47.78, lon: -73.56, esSalmonero: false },
+    { id: 10, nombre: 'Puerto Natales', region: 'Magallanes', lat: -51.73, lon: -72.51, esSalmonero: false },
+    { id: 11, nombre: 'Punta Arenas', region: 'Magallanes', lat: -53.16, lon: -70.91, esSalmonero: false },
+    { id: 12, nombre: 'Puerto Williams', region: 'Magallanes', lat: -54.93, lon: -67.61, esSalmonero: false },
+  ];
+
+  const [selectedPuerto, setSelectedPuerto] = useState(PUERTOS[0]);
   const [regionFilter, setRegionFilter] = useState('Todas');
   const [soloSalmonero, setSoloSalmonero] = useState(false);
-  const [soloLluvia, setSoloLluvia] = useState(false);
   const [searchText, setSearchText] = useState('');
+  const [climaData, setClimaData] = useState<any>(null);
+  const [marineData, setMarineData] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [lastUpdate, setLastUpdate] = useState('');
 
-  const filtered = PUERTOS_DATA.filter(p => {
+  // Calcular mareas aproximadas basadas en coordenadas y fecha
+  const calcularMareas = (lat: number, lon: number) => {
+    const now = new Date();
+    const dayOfYear = Math.floor((now.getTime() - new Date(now.getFullYear(), 0, 0).getTime()) / 86400000);
+    
+    // Ciclo lunar aproximado (29.53 días)
+    const lunarPhase = ((dayOfYear % 29.53) / 29.53) * 2 * Math.PI;
+    
+    // Rango de marea base según latitud (sur de Chile: 3-5m)
+    const baseRange = 3.5 + Math.abs(lat + 45) * 0.02;
+    
+    // Factor lunar (mareas vivas vs muertas)
+    const lunarFactor = 0.7 + 0.3 * Math.cos(lunarPhase);
+    const range = baseRange * lunarFactor;
+    
+    // Horas base de pleamar (semidiurno, ~12h 25min entre pleamares)
+    const tidePeriod = 12.42; // horas
+    const baseHour = ((lon + 180) % tidePeriod + tidePeriod) % tidePeriod;
+    
+    const mareas = [];
+    for (let i = 0; i < 4; i++) {
+      let hour = (baseHour + i * (tidePeriod / 2)) % 24;
+      const h = Math.floor(hour);
+      const m = Math.floor((hour - h) * 60);
+      const esPleamar = i % 2 === 0;
+      const altura = esPleamar 
+        ? (range / 2 + (range / 2) * (0.8 + 0.2 * Math.sin(i * 0.5))).toFixed(1)
+        : ((range / 2) * (0.2 + 0.1 * Math.sin(i * 0.7))).toFixed(1);
+      
+      mareas.push({
+        hora: `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`,
+        tipo: esPleamar ? 'Pleamar' : 'Bajamar',
+        altura: parseFloat(altura)
+      });
+    }
+    
+    return mareas.sort((a, b) => a.hora.localeCompare(b.hora));
+  };
+
+  // Obtener estado del mar basado en oleaje
+  const getEstadoMar = (waveHeight: number) => {
+    if (waveHeight < 0.5) return 'Calma';
+    if (waveHeight < 1.0) return 'Rizado';
+    if (waveHeight < 1.5) return 'Picado';
+    if (waveHeight < 2.0) return 'Marejada';
+    if (waveHeight < 3.0) return 'Fuerte Marejada';
+    if (waveHeight < 4.0) return 'Mar Gruesa';
+    return 'Tempestuoso';
+  };
+
+  // Obtener código de clima en texto
+  const getWeatherText = (code: number) => {
+    const codes: Record<number, string> = {
+      0: 'Despejado', 1: 'Mayormente despejado', 2: 'Parcialmente nublado', 3: 'Nublado',
+      45: 'Niebla', 48: 'Niebla con escarcha',
+      51: 'Llovizna ligera', 53: 'Llovizna moderada', 55: 'Llovizna densa',
+      61: 'Lluvia ligera', 63: 'Lluvia moderada', 65: 'Lluvia intensa',
+      71: 'Nieve ligera', 73: 'Nieve moderada', 75: 'Nieve intensa',
+      80: 'Chubascos ligeros', 81: 'Chubascos moderados', 82: 'Chubascos violentos',
+      95: 'Tormenta', 96: 'Tormenta con granizo', 99: 'Tormenta con granizo intenso'
+    };
+    return codes[code] || 'Desconocido';
+  };
+
+  const isLluvia = (code: number) => [51, 53, 55, 61, 63, 65, 80, 81, 82, 95, 96, 99].includes(code);
+
+  // Fetch datos climáticos
+  const fetchClima = async (lat: number, lon: number) => {
+    setLoading(true);
+    setError('');
+    try {
+      // Clima actual
+      const climaUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,wind_speed_10m,wind_gusts_10m,weather_code,relative_humidity_2m,wind_direction_10m&wind_speed_unit=kn&timezone=America%2FSantiago`;
+      
+      // Datos marinos
+      const marineUrl = `https://marine-api.open-meteo.com/v1/marine?latitude=${lat}&longitude=${lon}&current=wave_height,wave_period,wave_direction,swell_wave_height,swell_wave_period,wind_wave_height&timezone=America%2FSantiago`;
+
+      const [climaRes, marineRes] = await Promise.all([
+        fetch(climaUrl),
+        fetch(marineUrl)
+      ]);
+
+      if (!climaRes.ok) throw new Error('Error al obtener datos climáticos');
+      
+      const climaJson = await climaRes.json();
+      setClimaData(climaJson.current);
+
+      if (marineRes.ok) {
+        const marineJson = await marineRes.json();
+        setMarineData(marineJson.current);
+      }
+
+      setLastUpdate(new Date().toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' }));
+    } catch (err: any) {
+      setError('Error al obtener datos. Verifica tu conexión.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Cargar datos al cambiar de puerto
+  useEffect(() => {
+    fetchClima(selectedPuerto.lat, selectedPuerto.lon);
+  }, [selectedPuerto]);
+
+  const filtered = PUERTOS.filter(p => {
     if (regionFilter !== 'Todas' && p.region !== regionFilter) return false;
     if (soloSalmonero && !p.esSalmonero) return false;
-    if (soloLluvia && !p.lluvia) return false;
     if (searchText && !p.nombre.toLowerCase().includes(searchText.toLowerCase())) return false;
     return true;
   });
 
-  const recomendacion = getRecomendacionInmersion(selectedPuerto.oleaje, selectedPuerto.viento);
-  const beaufort = getBeaufort(selectedPuerto.viento);
-  const dirCardinal = getDireccionCardinal(selectedPuerto.dirViento);
+  const temp = climaData?.temperature_2m ?? '--';
+  const viento = climaData ? Math.round(climaData.wind_speed_10m) : 0;
+  const rafagas = climaData ? Math.round(climaData.wind_gusts_10m) : 0;
+  const dirViento = climaData?.wind_direction_10m ?? 0;
+  const weatherCode = climaData?.weather_code ?? 0;
+  const humedad = climaData?.relative_humidity_2m ?? '--';
+  const oleaje = marineData?.wave_height ?? 0;
+  const oleajePeriodo = marineData?.wave_period ?? 0;
+  const oleajeDir = marineData?.wave_direction ?? 0;
+  const swell = marineData?.swell_wave_height ?? 0;
+  const lluvia = isLluvia(weatherCode);
+
+  const recomendacion = getRecomendacionInmersion(oleaje, viento);
+  const beaufort = getBeaufort(viento);
+  const dirCardinal = getDireccionCardinal(dirViento);
+  const estadoMar = getEstadoMar(oleaje);
+  const mareas = calcularMareas(selectedPuerto.lat, selectedPuerto.lon);
 
   return (
     <div className="p-4 space-y-4">
-      <div className="flex items-center gap-2 mb-2">
-        <CloudRain size={20} className="text-cyan-400" />
-        <h2 className="text-lg font-bold text-white">Clima & Mareas</h2>
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2">
+          <CloudRain size={20} className="text-cyan-400" />
+          <h2 className="text-lg font-bold text-white">Clima & Mareas</h2>
+        </div>
+        {lastUpdate && (
+          <span className="text-[9px] text-slate-500">🕐 {lastUpdate}</span>
+        )}
       </div>
-      <p className="text-xs text-slate-400 -mt-2">Datos SHOA / DIRECTEMAR - Sur de Chile</p>
+      <p className="text-xs text-slate-400 -mt-2">Datos en tiempo real • Open-Meteo API</p>
 
       <div className="relative">
         <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
@@ -432,7 +561,6 @@ function ClimaModule() {
           <button key={r} onClick={() => setRegionFilter(r)} className={`px-3 py-1.5 rounded-lg text-[11px] font-medium whitespace-nowrap transition-all ${regionFilter === r ? 'bg-cyan-500 text-slate-950' : 'bg-slate-800 text-slate-400 border border-slate-700'}`}>{r}</button>
         ))}
         <button onClick={() => setSoloSalmonero(!soloSalmonero)} className={`px-3 py-1.5 rounded-lg text-[11px] font-medium whitespace-nowrap transition-all ${soloSalmonero ? 'bg-emerald-500 text-slate-950' : 'bg-slate-800 text-slate-400 border border-slate-700'}`}>🐟 Salmoneros</button>
-        <button onClick={() => setSoloLluvia(!soloLluvia)} className={`px-3 py-1.5 rounded-lg text-[11px] font-medium whitespace-nowrap transition-all ${soloLluvia ? 'bg-blue-500 text-white' : 'bg-slate-800 text-slate-400 border border-slate-700'}`}>🌧️ Lluvia</button>
       </div>
 
       <div className="space-y-2 max-h-40 overflow-y-auto scrollbar-hide">
@@ -443,86 +571,104 @@ function ClimaModule() {
               <span className="text-xs font-medium text-white">{p.nombre}</span>
               {p.esSalmonero && <span className="text-[9px] px-1.5 py-0.5 bg-emerald-500/20 text-emerald-400 rounded-full">Salmonero</span>}
             </div>
-            <div className="flex items-center gap-2">
-              {p.lluvia && <CloudRain size={12} className="text-blue-400" />}
-              <span className="text-[10px] text-slate-400">{p.temp}°C</span>
-            </div>
+            <span className="text-[10px] text-slate-400">{p.lat.toFixed(2)}°, {p.lon.toFixed(2)}°</span>
           </button>
         ))}
       </div>
 
-      {selectedPuerto.lluvia && (
-        <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 flex items-center gap-2">
-          <AlertTriangle size={16} className="text-amber-400 shrink-0" />
-          <p className="text-xs text-amber-300"><strong>⚠️ Alerta:</strong> Lluvia activa en {selectedPuerto.nombre}</p>
+      {loading && (
+        <div className="flex items-center justify-center py-4">
+          <div className="w-6 h-6 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin" />
+          <span className="text-xs text-slate-400 ml-2">Cargando datos en tiempo real...</span>
         </div>
       )}
 
-      <div className="bg-slate-800/50 rounded-2xl p-4 border border-slate-700 space-y-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-base font-bold text-white">{selectedPuerto.nombre}</h3>
-            <p className="text-[11px] text-slate-400">{selectedPuerto.region}</p>
-          </div>
-          <div className={`px-3 py-1 rounded-lg text-${recomendacion.color}-400 bg-${recomendacion.color}-400/10 border border-${recomendacion.color}-400/20`}>
-            <span className="text-[11px] font-bold">{recomendacion.texto}</span>
-          </div>
+      {error && (
+        <div className="bg-rose-500/10 border border-rose-500/30 rounded-xl p-3">
+          <p className="text-xs text-rose-400">{error}</p>
         </div>
+      )}
 
-        <div className="grid grid-cols-3 gap-3">
-          <div className="bg-slate-900/50 rounded-xl p-3 text-center">
-            <Thermometer size={16} className="text-rose-400 mx-auto mb-1" />
-            <p className="text-lg font-bold text-white">{selectedPuerto.temp}°</p>
-            <p className="text-[9px] text-slate-500">Temperatura</p>
-          </div>
-          <div className="bg-slate-900/50 rounded-xl p-3 text-center">
-            <Wind size={16} className="text-cyan-400 mx-auto mb-1" />
-            <p className="text-lg font-bold text-white">{selectedPuerto.viento}</p>
-            <p className="text-[9px] text-slate-500">Nudos (KT)</p>
-          </div>
-          <div className="bg-slate-900/50 rounded-xl p-3 text-center">
-            <Waves size={16} className="text-emerald-400 mx-auto mb-1" />
-            <p className="text-lg font-bold text-white">{selectedPuerto.oleaje}m</p>
-            <p className="text-[9px] text-slate-500">Oleaje</p>
-          </div>
+      {lluvia && !loading && (
+        <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 flex items-center gap-2">
+          <AlertTriangle size={16} className="text-amber-400 shrink-0" />
+          <p className="text-xs text-amber-300"><strong>⚠️ Alerta:</strong> {getWeatherText(weatherCode)} en {selectedPuerto.nombre}</p>
         </div>
+      )}
 
-        <div className="grid grid-cols-2 gap-3">
-          <div className="bg-slate-900/50 rounded-xl p-3">
-            <p className="text-[10px] text-slate-500 mb-1">Viento</p>
-            <p className="text-sm font-semibold text-white">{selectedPuerto.viento} KT</p>
-            <p className="text-[10px] text-slate-400">{(selectedPuerto.viento * 1.852).toFixed(1)} km/h</p>
-            <p className="text-[10px] text-cyan-400">Beaufort {beaufort.escala}</p>
-          </div>
-          <div className="bg-slate-900/50 rounded-xl p-3">
-            <p className="text-[10px] text-slate-500 mb-1">Estado del Mar</p>
-            <p className="text-sm font-semibold text-white">{selectedPuerto.estadoMar}</p>
-            <p className="text-[10px] text-slate-400">Dir: {selectedPuerto.dirViento}° ({dirCardinal})</p>
-          </div>
-        </div>
-
-        <div className="flex items-center justify-center">
-          <WindDial degrees={selectedPuerto.dirViento} />
-        </div>
-      </div>
-
-      <div className="bg-slate-800/50 rounded-2xl p-4 border border-slate-700">
-        <div className="flex items-center gap-2 mb-3">
-          <Droplets size={16} className="text-cyan-400" />
-          <span className="text-sm font-semibold text-white">Mareas del Día</span>
-        </div>
-        <div className="grid grid-cols-2 gap-2">
-          {selectedPuerto.mareas.map((m: any, i: number) => (
-            <div key={i} className={`p-3 rounded-xl ${m.tipo === 'Pleamar' ? 'bg-cyan-500/10 border border-cyan-500/20' : 'bg-slate-900/50 border border-slate-700'}`}>
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] text-slate-400">{m.tipo}</span>
-                <span className="text-[10px] text-slate-500">{m.hora}</span>
+      {!loading && climaData && (
+        <>
+          <div className="bg-slate-800/50 rounded-2xl p-4 border border-slate-700 space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-base font-bold text-white">{selectedPuerto.nombre}</h3>
+                <p className="text-[11px] text-slate-400">{selectedPuerto.region} • {getWeatherText(weatherCode)}</p>
               </div>
-              <p className="text-lg font-bold text-white mt-1">{m.altura}m</p>
+              <div className={`px-3 py-1 rounded-lg text-${recomendacion.color}-400 bg-${recomendacion.color}-400/10 border border-${recomendacion.color}-400/20`}>
+                <span className="text-[11px] font-bold">{recomendacion.texto}</span>
+              </div>
             </div>
-          ))}
-        </div>
-      </div>
+
+            <div className="grid grid-cols-3 gap-3">
+              <div className="bg-slate-900/50 rounded-xl p-3 text-center">
+                <Thermometer size={16} className="text-rose-400 mx-auto mb-1" />
+                <p className="text-lg font-bold text-white">{temp}°</p>
+                <p className="text-[9px] text-slate-500">Temperatura</p>
+              </div>
+              <div className="bg-slate-900/50 rounded-xl p-3 text-center">
+                <Wind size={16} className="text-cyan-400 mx-auto mb-1" />
+                <p className="text-lg font-bold text-white">{viento}</p>
+                <p className="text-[9px] text-slate-500">Nudos (KT)</p>
+              </div>
+              <div className="bg-slate-900/50 rounded-xl p-3 text-center">
+                <Waves size={16} className="text-emerald-400 mx-auto mb-1" />
+                <p className="text-lg font-bold text-white">{oleaje.toFixed(1)}m</p>
+                <p className="text-[9px] text-slate-500">Oleaje</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-slate-900/50 rounded-xl p-3">
+                <p className="text-[10px] text-slate-500 mb-1">Viento</p>
+                <p className="text-sm font-semibold text-white">{viento} KT</p>
+                <p className="text-[10px] text-slate-400">{(viento * 1.852).toFixed(1)} km/h • {(viento * 0.5144).toFixed(1)} m/s</p>
+                <p className="text-[10px] text-slate-400">Ráfagas: {rafagas} KT</p>
+                <p className="text-[10px] text-cyan-400">Beaufort {beaufort.escala}: {beaufort.descripcion}</p>
+              </div>
+              <div className="bg-slate-900/50 rounded-xl p-3">
+                <p className="text-[10px] text-slate-500 mb-1">Estado del Mar</p>
+                <p className="text-sm font-semibold text-white">{estadoMar}</p>
+                <p className="text-[10px] text-slate-400">Oleaje: {oleaje.toFixed(1)}m • Período: {oleajePeriodo.toFixed(1)}s</p>
+                <p className="text-[10px] text-slate-400">Swell: {swell.toFixed(1)}m</p>
+                <p className="text-[10px] text-slate-400">Humedad: {humedad}%</p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-center">
+              <WindDial degrees={dirViento} />
+            </div>
+          </div>
+
+          <div className="bg-slate-800/50 rounded-2xl p-4 border border-slate-700">
+            <div className="flex items-center gap-2 mb-3">
+              <Droplets size={16} className="text-cyan-400" />
+              <span className="text-sm font-semibold text-white">Mareas del Día</span>
+              <span className="text-[9px] text-slate-500 ml-auto">Calculadas por posición</span>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              {mareas.map((m: any, i: number) => (
+                <div key={i} className={`p-3 rounded-xl ${m.tipo === 'Pleamar' ? 'bg-cyan-500/10 border border-cyan-500/20' : 'bg-slate-900/50 border border-slate-700'}`}>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] text-slate-400">{m.tipo}</span>
+                    <span className="text-[10px] text-slate-500">{m.hora} hrs</span>
+                  </div>
+                  <p className="text-lg font-bold text-white mt-1">{m.altura}m</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
