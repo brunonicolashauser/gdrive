@@ -1490,6 +1490,15 @@ function CartModal({ cart, setCart, onClose }: any) {
                     />
                   </div>
                   
+                  <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3">
+                    <div className="flex gap-2">
+                      <AlertTriangle size={16} className="text-amber-400 flex-shrink-0 mt-0.5" />
+                      <p className="text-xs text-amber-200">
+                        <strong>Importante:</strong> Si otra persona de su empresa retirará el pedido, por favor avise por WhatsApp el nombre completo (nombre y apellido) de quien retira.
+                      </p>
+                    </div>
+                  </div>
+                  
                   <div className="flex gap-2">
                     <button onClick={() => setShowClientForm(false)} className="flex-1 py-2.5 bg-slate-700 text-slate-300 font-medium rounded-xl text-sm">
                       Volver
