@@ -799,24 +799,26 @@ function CatalogoModule({ cart, setCart, products }: any) {
 
 // ==================== TALLER MODULE ====================
 function TallerModule() {
+  const WHATSAPP_NUMBER = '56997756020';
   const [ordenes, setOrdenes] = useState<any[]>([
-    { id: 'GERD-8942-PM', numeroSerie: 'CM-4821-A', pruebaAerostatica: 'AP-300-OK', anioFabricacion: '2019', foto: null, paso: 4, cliente: 'Salmones Austral S.A.', fecha: '2024-01-15' },
-    { id: 'GERD-7631-AN', numeroSerie: 'BT-7733-C', pruebaAerostatica: 'AP-250-OK', anioFabricacion: '2020', foto: null, paso: 6, cliente: 'Multiexport Foods', fecha: '2024-01-10' },
-    { id: 'GERD-9105-CT', numeroSerie: 'OX-1192-B', pruebaAerostatica: 'Pendiente', anioFabricacion: '2021', foto: null, paso: 2, cliente: 'Marine Harvest Chile', fecha: '2024-01-18' },
+    { id: 'GERD-CM4821A-001', numeroSerie: 'CM-4821-A', pruebaAerostatica: 'AP-300-OK', anioFabricacion: '2019', foto: null, paso: 4, cliente: 'Salmones Austral S.A.', telefono: '+56 9 1234 5678', fecha: '2024-01-15' },
+    { id: 'GERD-BT7733C-002', numeroSerie: 'BT-7733-C', pruebaAerostatica: 'AP-250-OK', anioFabricacion: '2020', foto: null, paso: 6, cliente: 'Multiexport Foods', telefono: '+56 9 8765 4321', fecha: '2024-01-10' },
+    { id: 'GERD-OX1192B-003', numeroSerie: 'OX-1192-B', pruebaAerostatica: 'Pendiente', anioFabricacion: '2021', foto: null, paso: 2, cliente: 'Marine Harvest Chile', telefono: '+56 9 5555 1234', fecha: '2024-01-18' },
   ]);
   const [showForm, setShowForm] = useState(false);
   const [editingOrden, setEditingOrden] = useState<any>(null);
   const [searchCode, setSearchCode] = useState('');
   const [selectedOrden, setSelectedOrden] = useState<any>(null);
+  const [envioConfirmado, setEnvioConfirmado] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState({
-    id: '',
     numeroSerie: '',
     pruebaAerostatica: '',
     anioFabricacion: '',
     foto: null as string | null,
     cliente: '',
+    telefono: '',
   });
 
   const PASOS_TALLER = [
@@ -839,27 +841,60 @@ function TallerModule() {
     }
   };
 
+  const generarId = (serie: string) => {
+    const serieLimpia = serie.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+    const num = String(ordenes.length + 1).padStart(3, '0');
+    return `GERD-${serieLimpia}-${num}`;
+  };
+
+  const enviarWhatsApp = (orden: any) => {
+    let msg = `🔧 *PLANILLA DE TALLER - GERDIVER CHILE*\n`;
+    msg += `━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+    msg += `📋 *ID Orden:* ${orden.id}\n`;
+    msg += `🔢 *N° Serie:* ${orden.numeroSerie}\n`;
+    msg += `🧪 *Prueba Aerostática:* ${orden.pruebaAerostatica || 'Pendiente'}\n`;
+    msg += `📅 *Año Fabricación:* ${orden.anioFabricacion || 'No indicado'}\n`;
+    msg += `🏢 *Cliente:* ${orden.cliente || 'No indicado'}\n`;
+    msg += `📞 *Teléfono:* ${orden.telefono || 'No indicado'}\n`;
+    msg += `📆 *Fecha:* ${orden.fecha}\n`;
+    msg += `⚙️ *Estado:* Paso ${orden.paso}/6\n\n`;
+    msg += `━━━━━━━━━━━━━━━━━━━━━━━\n`;
+    msg += `📍 Gerdiver Chile - Puerto Montt`;
+
+    const encoded = encodeURIComponent(msg);
+    window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encoded}`, '_blank');
+    setEnvioConfirmado(true);
+    setTimeout(() => setEnvioConfirmado(false), 3000);
+  };
+
   const saveOrden = () => {
-    if (!formData.id || !formData.numeroSerie) return;
+    if (!formData.numeroSerie) return;
     if (editingOrden) {
       setOrdenes(ordenes.map(o => o.id === editingOrden.id ? { ...o, ...formData } : o));
     } else {
-      setOrdenes([...ordenes, { ...formData, paso: 1, fecha: new Date().toISOString().split('T')[0] }]);
+      const nuevaOrden = {
+        ...formData,
+        id: generarId(formData.numeroSerie),
+        paso: 1,
+        fecha: new Date().toISOString().split('T')[0],
+      };
+      setOrdenes([...ordenes, nuevaOrden]);
+      enviarWhatsApp(nuevaOrden);
     }
     setShowForm(false);
     setEditingOrden(null);
-    setFormData({ id: '', numeroSerie: '', pruebaAerostatica: '', anioFabricacion: '', foto: null, cliente: '' });
+    setFormData({ numeroSerie: '', pruebaAerostatica: '', anioFabricacion: '', foto: null, cliente: '', telefono: '' });
   };
 
   const editOrden = (orden: any) => {
     setEditingOrden(orden);
     setFormData({
-      id: orden.id,
       numeroSerie: orden.numeroSerie,
       pruebaAerostatica: orden.pruebaAerostatica,
       anioFabricacion: orden.anioFabricacion,
       foto: orden.foto,
       cliente: orden.cliente,
+      telefono: orden.telefono || '',
     });
     setShowForm(true);
   };
@@ -882,7 +917,7 @@ function TallerModule() {
           <Wrench size={20} className="text-rose-400" />
           <h2 className="text-lg font-bold text-white">Taller</h2>
         </div>
-        <button onClick={() => { setShowForm(true); setEditingOrden(null); setFormData({ id: '', numeroSerie: '', pruebaAerostatica: '', anioFabricacion: '', foto: null, cliente: '' }); }} className="px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/30 rounded-lg text-emerald-400 text-[11px] font-semibold">
+        <button onClick={() => { setShowForm(true); setEditingOrden(null); setFormData({ numeroSerie: '', pruebaAerostatica: '', anioFabricacion: '', foto: null, cliente: '', telefono: '' }); }} className="px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/30 rounded-lg text-emerald-400 text-[11px] font-semibold">
           <Plus size={12} className="inline mr-1" />Nueva
         </button>
       </div>
@@ -890,7 +925,7 @@ function TallerModule() {
 
       <div className="relative">
         <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
-        <input value={searchCode} onChange={e => setSearchCode(e.target.value)} placeholder="Buscar por código o N° serie..." className="w-full pl-9 pr-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:border-rose-500 focus:outline-none" />
+        <input value={searchCode} onChange={e => setSearchCode(e.target.value)} placeholder="Buscar por N° serie o cliente..." className="w-full pl-9 pr-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:border-rose-500 focus:outline-none" />
       </div>
 
       {/* Lista de órdenes */}
@@ -942,6 +977,10 @@ function TallerModule() {
                     <div>
                       <p className="text-[9px] text-slate-500">Cliente</p>
                       <p className="text-xs font-medium text-white">{o.cliente}</p>
+                    </div>
+                    <div className="col-span-2">
+                      <p className="text-[9px] text-slate-500">Teléfono</p>
+                      <p className="text-xs font-medium text-white">{o.telefono || 'No indicado'}</p>
                     </div>
                   </div>
                   {o.foto && (
@@ -995,7 +1034,7 @@ function TallerModule() {
           <div className="w-full max-w-[390px] bg-slate-900 rounded-t-3xl border-t border-slate-700 max-h-[90vh] overflow-y-auto">
             <div className="p-4 space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-base font-bold text-white">{editingOrden ? 'Editar Orden' : 'Nueva Orden de Taller'}</h3>
+                <h3 className="text-base font-bold text-white">{editingOrden ? 'Editar Orden' : 'Ingreso de Botella'}</h3>
                 <button onClick={() => { setShowForm(false); setEditingOrden(null); }} className="p-1 rounded-lg bg-slate-800"><X size={16} className="text-slate-400" /></button>
               </div>
 
@@ -1023,16 +1062,6 @@ function TallerModule() {
 
               {/* Form Fields */}
               <div className="space-y-3">
-                <div>
-                  <label className="text-[10px] text-slate-400 uppercase tracking-wider mb-1 block">Código de Orden *</label>
-                  <input
-                    value={formData.id}
-                    onChange={e => setFormData({ ...formData, id: e.target.value })}
-                    placeholder="Ej: GERD-1234-PM"
-                    className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-rose-500"
-                  />
-                </div>
-
                 <div>
                   <label className="text-[10px] text-slate-400 uppercase tracking-wider mb-1 block">Número de Serie *</label>
                   <input
@@ -1080,15 +1109,41 @@ function TallerModule() {
                     className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-rose-500"
                   />
                 </div>
+
+                <div>
+                  <label className="text-[10px] text-slate-400 uppercase tracking-wider mb-1 block">Número de Teléfono</label>
+                  <input
+                    type="tel"
+                    value={formData.telefono}
+                    onChange={e => setFormData({ ...formData, telefono: e.target.value })}
+                    placeholder="Ej: +56 9 1234 5678"
+                    className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-rose-500"
+                  />
+                  <p className="text-[9px] text-slate-500 mt-1">Teléfono de contacto del cliente</p>
+                </div>
               </div>
+
+              {!editingOrden && (
+                <div className="bg-cyan-500/10 border border-cyan-500/30 rounded-xl p-3 flex items-start gap-2">
+                  <MessageCircle size={14} className="text-cyan-400 mt-0.5 shrink-0" />
+                  <p className="text-[10px] text-cyan-300">Al crear la orden, se enviará automáticamente la planilla por WhatsApp al taller.</p>
+                </div>
+              )}
+
+              {envioConfirmado && (
+                <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-3 flex items-center gap-2">
+                  <CheckCircle size={14} className="text-emerald-400" />
+                  <p className="text-[10px] text-emerald-300">✓ Planilla enviada correctamente</p>
+                </div>
+              )}
 
               <button
                 onClick={saveOrden}
-                disabled={!formData.id || !formData.numeroSerie}
+                disabled={!formData.numeroSerie}
                 className="w-full py-3 bg-gradient-to-r from-rose-500 to-rose-400 text-white font-bold rounded-xl text-sm disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Check size={16} className="inline mr-2" />
-                {editingOrden ? 'Guardar Cambios' : 'Crear Orden'}
+                {editingOrden ? 'Guardar Cambios' : 'Crear Orden y Enviar'}
               </button>
             </div>
           </div>
