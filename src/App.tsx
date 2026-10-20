@@ -1324,6 +1324,9 @@ function CartModal({ cart, setCart, onClose }: any) {
   const WHATSAPP_NUMBER = '56997756020';
   const [orderConfirmed, setOrderConfirmed] = useState(false);
   const [orderNumber, setOrderNumber] = useState('');
+  const [showClientForm, setShowClientForm] = useState(false);
+  const [clientName, setClientName] = useState('');
+  const [clientPhone, setClientPhone] = useState('');
 
   const total = cart.reduce((sum: number, item: any) => {
     const price = item.product.precioVenta * item.quantity;
@@ -1337,6 +1340,11 @@ function CartModal({ cart, setCart, onClose }: any) {
   };
 
   const sendWhatsApp = () => {
+    if (!clientName.trim() || !clientPhone.trim()) {
+      alert('Por favor, ingresa tu nombre y número de teléfono');
+      return;
+    }
+
     const orderNum = generateOrderNumber();
     setOrderNumber(orderNum);
     
@@ -1345,7 +1353,12 @@ function CartModal({ cart, setCart, onClose }: any) {
     msg += `📋 *N° Orden:* ${orderNum}\n`;
     msg += `📅 *Fecha:* ${new Date().toLocaleDateString('es-CL')}\n`;
     msg += `⏰ *Hora:* ${new Date().toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}\n\n`;
-    msg += `*DETALLE DEL PEDIDO:*\n\n`;
+    
+    msg += `*DATOS DEL CLIENTE:*\n`;
+    msg += `👤 *Nombre:* ${clientName}\n`;
+    msg += `📞 *Teléfono:* ${clientPhone}\n\n`;
+    
+    msg += `*PRODUCTOS QUE ESTÁ COMPRANDO:*\n\n`;
     
     cart.forEach((item: any, i: number) => {
       const price = item.product.precioVenta * item.quantity;
@@ -1444,9 +1457,49 @@ function CartModal({ cart, setCart, onClose }: any) {
                   <span className="text-xl font-bold text-emerald-400">{formatCLP(total)} CLP</span>
                 </div>
               </div>
-              <button onClick={sendWhatsApp} className="w-full py-3.5 bg-gradient-to-r from-emerald-500 to-emerald-400 text-slate-950 font-bold rounded-xl text-sm flex items-center justify-center gap-2">
-                <MessageCircle size={18} />Confirmar Pedido
-              </button>
+              
+              {!showClientForm ? (
+                <button onClick={() => setShowClientForm(true)} className="w-full py-3.5 bg-gradient-to-r from-emerald-500 to-emerald-400 text-slate-950 font-bold rounded-xl text-sm flex items-center justify-center gap-2">
+                  <MessageCircle size={18} />Confirmar Pedido
+                </button>
+              ) : (
+                <div className="space-y-3">
+                  <div className="bg-cyan-500/10 border border-cyan-500/30 rounded-xl p-3">
+                    <p className="text-xs text-cyan-300">📝 Ingresa tus datos para completar el pedido</p>
+                  </div>
+                  
+                  <div>
+                    <label className="text-[10px] text-slate-400 uppercase tracking-wider mb-1 block">Nombre Completo *</label>
+                    <input
+                      type="text"
+                      value={clientName}
+                      onChange={(e) => setClientName(e.target.value)}
+                      placeholder="Ej: Juan Pérez"
+                      className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="text-[10px] text-slate-400 uppercase tracking-wider mb-1 block">Número de Teléfono *</label>
+                    <input
+                      type="tel"
+                      value={clientPhone}
+                      onChange={(e) => setClientPhone(e.target.value)}
+                      placeholder="Ej: +56 9 1234 5678"
+                      className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500"
+                    />
+                  </div>
+                  
+                  <div className="flex gap-2">
+                    <button onClick={() => setShowClientForm(false)} className="flex-1 py-2.5 bg-slate-700 text-slate-300 font-medium rounded-xl text-sm">
+                      Volver
+                    </button>
+                    <button onClick={sendWhatsApp} className="flex-1 py-2.5 bg-gradient-to-r from-emerald-500 to-emerald-400 text-slate-950 font-bold rounded-xl text-sm flex items-center justify-center gap-2">
+                      <Check size={16} />Enviar
+                    </button>
+                  </div>
+                </div>
+              )}
             </>
           )}
         </div>
