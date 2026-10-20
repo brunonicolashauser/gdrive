@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Anchor, Waves, Wind, Thermometer, CloudRain, Compass, Gauge,
   ShoppingCart, Package, Search, MapPin, AlertTriangle, CheckCircle, XCircle,
   Phone, MessageCircle, Settings, Plus, Trash2, Edit, Lock, Unlock,
   Smartphone, Monitor, Droplets, Ship, Zap, Activity, Navigation,
-  Calendar, Percent, X, Check, Home, Wrench, Bell, ChevronRight
+  Percent, X, Check, Home, Wrench, Bell, ChevronRight, Camera, Upload, Image as ImageIcon
 } from 'lucide-react';
 
 // ==================== DATA ====================
@@ -24,43 +24,26 @@ const PUERTOS_DATA = [
 ];
 
 const INITIAL_PRODUCTS = [
-  { id: 1, nombre: 'Traje Neopreno 7mm Henderson', categoria: 'Trajes', precioVenta: 450000, precioArriendo: 15000, stock: 12, imagen: 'https://image.qwenlm.ai/generated-images/54835510-0583-4204-b9e0-572ab9dcb867/_result.png', descripcion: 'Traje húmedo 7mm para aguas frías del sur de Chile. Costuras selladas, capucha integrada.' },
-  { id: 2, nombre: 'Ordenador Cressi Giotto', categoria: 'Electrónica', precioVenta: 380000, precioArriendo: 12000, stock: 8, imagen: 'https://image.qwenlm.ai/generated-images/cdfa54ec-ddd2-49df-a337-1a9cf2bda3ba/_result.png', descripcion: 'Ordenador de buceo con algoritmo RGBM, 3 modos de operación, nitrox compatible.' },
-  { id: 3, nombre: 'Chicote Profesional 12m', categoria: 'Reguladores', precioVenta: 120000, precioArriendo: 5000, stock: 25, imagen: 'https://image.qwenlm.ai/generated-images/544a4cc0-ee75-473e-81e8-7c814d5ed7c0/_result.png', descripcion: 'Chicote reforzado de 12 metros con conectores DIN, manguera de alta presión.' },
-  { id: 4, nombre: 'Regulador Apeks MTX-R', categoria: 'Reguladores', precioVenta: 520000, precioArriendo: 18000, stock: 6, imagen: 'https://image.qwenlm.ai/generated-images/4ffa3511-9727-472a-8a5b-f8ee886973ee/_result.png', descripcion: 'Regulador de doble etapa para buceo comercial, primera etapa compensada.' },
-  { id: 5, nombre: 'Aceite Coltri 1.5L', categoria: 'Compresores', precioVenta: 85000, precioArriendo: 0, stock: 40, imagen: 'https://image.qwenlm.ai/generated-images/18a47774-5d9c-4ce9-8bdc-2c5367ac4827/_result.png', descripcion: 'Aceite sintético para compresores Coltri, cambio cada 100 horas de uso.' },
-  { id: 6, nombre: 'Cilindro O2 Medicinal 3L', categoria: 'Cilindros', precioVenta: 280000, precioArriendo: 8000, stock: 15, imagen: 'https://image.qwenlm.ai/generated-images/b414f931-b49d-4af9-9649-193e33b29261/_result.png', descripcion: 'Cilindro de aluminio 3 litros para oxígeno medicinal, válvula DIN.' },
-  { id: 7, nombre: 'Arnés de Seguridad Industrial', categoria: 'Seguridad', precioVenta: 95000, precioArriendo: 4000, stock: 20, imagen: 'https://image.qwenlm.ai/generated-images/3d822e42-44be-498b-a2dd-3759e9b1279a/_result.png', descripcion: 'Arnés de cuerpo completo certificado para trabajos subacuáticos.' },
-  { id: 8, nombre: 'Casco Kirby Morgan 48', categoria: 'Equipos', precioVenta: 3500000, precioArriendo: 85000, stock: 3, imagen: 'https://image.qwenlm.ai/generated-images/a8d38bda-d420-4ee0-a18b-8b086866e4d8/_result.png', descripcion: 'Casco de buceo comercial con sistema de comunicaciones integrado.' },
+  { id: 1, nombre: 'Traje Neopreno 7mm Henderson', categoria: 'Trajes', precioVenta: 450000, stock: 12, imagen: '🤿', descripcion: 'Traje húmedo 7mm para aguas frías del sur de Chile.' },
+  { id: 2, nombre: 'Ordenador Cressi Giotto', categoria: 'Electrónica', precioVenta: 380000, stock: 8, imagen: '🖥️', descripcion: 'Ordenador de buceo con algoritmo RGBM.' },
+  { id: 3, nombre: 'Chicote Profesional 12m', categoria: 'Reguladores', precioVenta: 120000, stock: 25, imagen: '🔗', descripcion: 'Chicote reforzado de 12 metros.' },
+  { id: 4, nombre: 'Regulador Apeks MTX-R', categoria: 'Reguladores', precioVenta: 520000, stock: 6, imagen: '⚙️', descripcion: 'Regulador de doble etapa para buceo comercial.' },
+  { id: 5, nombre: 'Aceite Coltri 1.5L', categoria: 'Compresores', precioVenta: 85000, stock: 40, imagen: '🛢️', descripcion: 'Aceite sintético para compresores Coltri.' },
+  { id: 6, nombre: 'Cilindro O2 Medicinal 3L', categoria: 'Cilindros', precioVenta: 280000, stock: 15, imagen: '🫧', descripcion: 'Cilindro de aluminio 3 litros para oxígeno medicinal.' },
+  { id: 7, nombre: 'Arnés de Seguridad Industrial', categoria: 'Seguridad', precioVenta: 95000, stock: 20, imagen: '🦺', descripcion: 'Arnés de cuerpo completo certificado.' },
+  { id: 8, nombre: 'Casco Kirby Morgan 48', categoria: 'Equipos', precioVenta: 3500000, stock: 3, imagen: '⛑️', descripcion: 'Casco de buceo comercial con comunicaciones.' },
 ];
 
 const INITIAL_PLANS = [
-  { id: 1, nombre: 'Plan Flota Mayorista', descuento: 25, dias: 0, tipo: 'venta', descripcion: 'Descuento por volumen para compras sobre 5 unidades' },
-  { id: 2, nombre: 'Plan Descuento Volumen', descuento: 10, dias: 0, tipo: 'venta', descripcion: '10% descuento compras sobre $500.000 CLP' },
-];
-
-const ORDENES_TALLER = [
-  { id: 'GERD-8942-PM', cilindro: 'Cilindro O2 3L #2847', cliente: 'Salmones Austral S.A.', paso: 4, fecha: '2024-01-15' },
-  { id: 'GERD-7631-AN', cilindro: 'Cilindro Aire 6L #1523', cliente: 'Multiexport Foods', paso: 6, fecha: '2024-01-10' },
-  { id: 'GERD-9105-CT', cilindro: 'Cilindro O2 3L #3102', cliente: 'Marine Harvest Chile', paso: 2, fecha: '2024-01-18' },
-  { id: 'GERD-6548-QU', cilindro: 'Cilindro Mezcla 10L #892', cliente: 'Pesquera Montt', paso: 5, fecha: '2024-01-12' },
-  { id: 'GERD-4421-PM', cilindro: 'Cilindro O2 6L #4401', cliente: 'AquaChile S.A.', paso: 1, fecha: '2024-01-20' },
-];
-
-const PASOS_TALLER = [
-  { nombre: 'Recepción', icon: '📥', desc: 'Ingreso y registro del cilindro' },
-  { nombre: 'Desvalvulado', icon: '🔧', desc: 'Retiro de válvula e inspección' },
-  { nombre: 'Prueba Hidrostática', icon: '💧', desc: 'Prueba a 300 bar según norma' },
-  { nombre: 'Secado', icon: '☀️', desc: 'Secado con nitrógeno' },
-  { nombre: 'Carga O2', icon: '🫧', desc: 'Carga de O2 medicinal a 200 bar' },
-  { nombre: 'Listo para retiro', icon: '✅', desc: 'Certificado y despachado' },
+  { id: 1, nombre: 'Plan Flota Mayorista', descuento: 25, tipo: 'venta', descripcion: 'Descuento por volumen para compras sobre 5 unidades' },
+  { id: 2, nombre: 'Plan Descuento Volumen', descuento: 10, tipo: 'venta', descripcion: '10% descuento compras sobre $500.000 CLP' },
 ];
 
 // ==================== UTILITIES ====================
 function getRecomendacionInmersion(oleaje: number, viento: number) {
-  if (oleaje <= 1.0 && viento <= 15) return { texto: 'Óptimo', color: 'emerald', icon: CheckCircle };
-  if (oleaje <= 2.0 && viento <= 25) return { texto: 'Precaución', color: 'amber', icon: AlertTriangle };
-  return { texto: 'Riesgo Alto', color: 'rose', icon: XCircle };
+  if (oleaje <= 1.0 && viento <= 15) return { texto: 'Óptimo', color: 'emerald' };
+  if (oleaje <= 2.0 && viento <= 25) return { texto: 'Precaución', color: 'amber' };
+  return { texto: 'Riesgo Alto', color: 'rose' };
 }
 
 function getBeaufort(nudos: number) {
@@ -139,11 +122,7 @@ export default function App() {
 // ==================== SPLASH SCREEN ====================
 function SplashScreen({ viewMode, setViewMode, onEnter }: any) {
   const [isLoading, setIsLoading] = useState(false);
-
-  const handleEnter = () => {
-    setIsLoading(true);
-    setTimeout(() => onEnter(), 800);
-  };
+  const handleEnter = () => { setIsLoading(true); setTimeout(() => onEnter(), 800); };
 
   return (
     <div className="min-h-screen bg-slate-950 font-[Inter] text-white relative overflow-hidden flex items-center justify-center">
@@ -151,38 +130,13 @@ function SplashScreen({ viewMode, setViewMode, onEnter }: any) {
         <div className="absolute inset-0 bg-gradient-to-b from-cyan-950/20 via-slate-950 to-slate-950" />
         <div className="absolute top-0 left-0 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl animate-pulse" />
         <div className="absolute bottom-0 right-0 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
-        <div className="absolute bottom-0 left-0 right-0 h-64 opacity-20">
-          <svg className="absolute bottom-0 w-full h-32 animate-wave" viewBox="0 0 1200 120" preserveAspectRatio="none">
-            <path d="M0,60 C150,90 350,30 500,60 C650,90 850,30 1000,60 C1150,90 1200,60 1200,60 L1200,120 L0,120 Z" fill="url(#wave-gradient-1)" />
-          </svg>
-          <svg className="absolute bottom-0 w-full h-24 animate-wave-slow" viewBox="0 0 1200 120" preserveAspectRatio="none">
-            <path d="M0,80 C200,50 400,110 600,80 C800,50 1000,110 1200,80 L1200,120 L0,120 Z" fill="url(#wave-gradient-2)" />
-          </svg>
-          <defs>
-            <linearGradient id="wave-gradient-1" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#22d3ee" />
-              <stop offset="100%" stopColor="#34d399" />
-            </linearGradient>
-            <linearGradient id="wave-gradient-2" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#34d399" />
-              <stop offset="100%" stopColor="#22d3ee" />
-            </linearGradient>
-          </defs>
-        </div>
-        <div className="absolute inset-0">
-          {[...Array(20)].map((_, i) => (
-            <div key={i} className="absolute w-1 h-1 bg-cyan-400/30 rounded-full animate-float-particle" style={{ left: `${Math.random() * 100}%`, top: `${Math.random() * 100}%`, animationDelay: `${Math.random() * 5}s`, animationDuration: `${3 + Math.random() * 4}s` }} />
-          ))}
-        </div>
       </div>
-
       <div className="absolute top-6 right-6 z-50">
         <button onClick={() => setViewMode(viewMode === 'mobile' ? 'desktop' : 'mobile')} className="flex items-center gap-2 px-4 py-2 bg-slate-800/80 backdrop-blur-sm border border-slate-700 rounded-full hover:bg-slate-700/80 transition-all">
           {viewMode === 'mobile' ? <Monitor size={16} className="text-cyan-400" /> : <Smartphone size={16} className="text-cyan-400" />}
           <span className="text-xs text-slate-300">{viewMode === 'mobile' ? 'Escritorio' : 'Móvil'}</span>
         </button>
       </div>
-
       <div className={`relative z-10 text-center px-6 max-w-lg transition-all duration-700 ${isLoading ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}>
         <div className="mb-8 relative">
           <div className="relative inline-block">
@@ -192,59 +146,23 @@ function SplashScreen({ viewMode, setViewMode, onEnter }: any) {
             </div>
           </div>
         </div>
-
-        <h1 className="text-5xl font-black mb-3 bg-gradient-to-r from-cyan-400 via-emerald-400 to-cyan-400 bg-clip-text text-transparent animate-shimmer-text">GERDIVER</h1>
-        
+        <h1 className="text-5xl font-black mb-3 bg-gradient-to-r from-cyan-400 via-emerald-400 to-cyan-400 bg-clip-text text-transparent">GERDIVER</h1>
         <div className="flex items-center justify-center gap-2 mb-6">
           <div className="h-px w-12 bg-gradient-to-r from-transparent to-cyan-400" />
           <p className="text-sm font-semibold text-cyan-400 tracking-widest uppercase">Chile</p>
           <div className="h-px w-12 bg-gradient-to-l from-transparent to-cyan-400" />
         </div>
-
-        <p className="text-slate-400 text-sm mb-2 leading-relaxed">Buceo Comercial & Servicios Marítimos</p>
-        <p className="text-slate-500 text-xs mb-8">Puerto Montt • Servicios de inmersión, acuícola-salmonero, equipos marinos y taller especializado</p>
-
-        <div className="grid grid-cols-3 gap-3 mb-8">
-          <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-3 hover:border-cyan-500/50 transition-all">
-            <CloudRain size={20} className="text-cyan-400 mx-auto mb-1" />
-            <p className="text-[10px] text-slate-400">Clima & Mareas</p>
-          </div>
-          <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-3 hover:border-emerald-500/50 transition-all">
-            <Package size={20} className="text-emerald-400 mx-auto mb-1" />
-            <p className="text-[10px] text-slate-400">Catálogo</p>
-          </div>
-          <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-3 hover:border-amber-500/50 transition-all">
-            <Wrench size={20} className="text-amber-400 mx-auto mb-1" />
-            <p className="text-[10px] text-slate-400">Taller</p>
-          </div>
-        </div>
-
+        <p className="text-slate-400 text-sm mb-2">Buceo Comercial & Servicios Marítimos</p>
+        <p className="text-slate-500 text-xs mb-8">Puerto Montt • Servicios de inmersión, acuícola-salmonero y taller especializado</p>
         <button onClick={handleEnter} disabled={isLoading} className="group relative w-full max-w-xs mx-auto">
           <div className="absolute inset-0 bg-gradient-to-r from-cyan-400 to-emerald-400 rounded-2xl blur-lg opacity-50 group-hover:opacity-75 transition-opacity" />
-          <div className="relative flex items-center justify-center gap-3 px-8 py-4 bg-gradient-to-r from-cyan-400 to-emerald-400 text-slate-950 font-bold rounded-2xl text-lg shadow-xl group-hover:shadow-2xl group-hover:shadow-cyan-500/50 transition-all group-hover:scale-105">
-            {isLoading ? (
-              <>
-                <div className="w-5 h-5 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
-                <span>Ingresando...</span>
-              </>
-            ) : (
-              <>
-                <span>Ingresar</span>
-                <ChevronRight size={24} className="group-hover:translate-x-1 transition-transform" />
-              </>
-            )}
+          <div className="relative flex items-center justify-center gap-3 px-8 py-4 bg-gradient-to-r from-cyan-400 to-emerald-400 text-slate-950 font-bold rounded-2xl text-lg shadow-xl group-hover:scale-105 transition-all">
+            {isLoading ? <><div className="w-5 h-5 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" /><span>Ingresando...</span></> : <><span>Ingresar</span><ChevronRight size={24} /></>}
           </div>
         </button>
-
         <div className="mt-8 flex items-center justify-center gap-4 text-xs text-slate-500">
-          <div className="flex items-center gap-1">
-            <MapPin size={12} />
-            <span>Puerto Montt</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <Phone size={12} />
-            <span>+569 8889 2747</span>
-          </div>
+          <div className="flex items-center gap-1"><MapPin size={12} /><span>Puerto Montt</span></div>
+          <div className="flex items-center gap-1"><Phone size={12} /><span>+569 8889 2747</span></div>
         </div>
       </div>
     </div>
@@ -349,46 +267,30 @@ function InicioModule({ setActive }: any) {
     <div className="p-4 space-y-4">
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-cyan-500/20 via-slate-800 to-emerald-500/20 p-6 border border-cyan-500/20">
         <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-400/10 rounded-full blur-2xl" />
-        <div className="absolute bottom-0 left-0 w-24 h-24 bg-emerald-400/10 rounded-full blur-xl" />
         <div className="relative">
           <div className="flex items-center gap-2 mb-2">
             <Ship size={20} className="text-cyan-400" />
             <span className="text-xs text-cyan-400 font-medium">Bienvenido a Gerdiver</span>
           </div>
           <h2 className="text-xl font-bold text-white mb-1">Buceo Comercial & Servicios Marítimos</h2>
-          <p className="text-sm text-slate-400">Puerto Montt, Chile • Servicios de inmersión, acuícola-salmonero y taller especializado</p>
+          <p className="text-sm text-slate-400">Puerto Montt, Chile</p>
         </div>
       </div>
-
       <div className="grid grid-cols-2 gap-3">
         <QuickCard icon={CloudRain} title="Clima & Mareas" subtitle="SHOA / DIRECTEMAR" color="cyan" onClick={() => setActive('clima')} />
         <QuickCard icon={Gauge} title="Conversor KT" subtitle="Nudos & Brújula" color="emerald" onClick={() => setActive('convertidor')} />
         <QuickCard icon={Package} title="Catálogo" subtitle="Equipos de Buceo" color="amber" onClick={() => setActive('catalogo')} />
         <QuickCard icon={Wrench} title="Taller" subtitle="Prueba Hidrostática" color="rose" onClick={() => setActive('taller')} />
       </div>
-
       <div className="bg-slate-800/50 rounded-2xl p-4 border border-slate-700">
         <div className="flex items-center gap-2 mb-3">
           <Bell size={16} className="text-amber-400" />
           <span className="text-sm font-semibold text-white">Alertas Operativas</span>
         </div>
         <div className="space-y-2">
-          <AlertItem severity="warning" text="Puerto Williams: Vientos 45 KT - Riesgo alto de inmersión" />
-          <AlertItem severity="danger" text="Melinka: Lluvia activa - Revisar condiciones antes de zarpar" />
-          <AlertItem severity="info" text="Puerto Montt: Condiciones óptimas para inmersión" />
-        </div>
-      </div>
-
-      <div className="bg-slate-800/50 rounded-2xl p-4 border border-slate-700">
-        <div className="flex items-center gap-2 mb-3">
-          <Activity size={16} className="text-emerald-400" />
-          <span className="text-sm font-semibold text-white">Servicios Destacados</span>
-        </div>
-        <div className="space-y-2">
-          <ServiceItem icon="🤿" text="Buceo Comercial e Industrial" />
-          <ServiceItem icon="🐟" text="Servicios Acuícola-Salmoneros" />
-          <ServiceItem icon="🔧" text="Taller & Prueba Hidrostática" />
-          <ServiceItem icon="🫧" text="Oxígeno Medicinal Certificado" />
+          <AlertItem severity="warning" text="Puerto Williams: Vientos 45 KT - Riesgo alto" />
+          <AlertItem severity="danger" text="Melinka: Lluvia activa - Revisar condiciones" />
+          <AlertItem severity="info" text="Puerto Montt: Condiciones óptimas" />
         </div>
       </div>
     </div>
@@ -417,15 +319,6 @@ function AlertItem({ severity, text }: any) {
     <div className={`flex items-start gap-2 p-2 rounded-lg ${colors[severity]}`}>
       <AlertTriangle size={12} className="mt-0.5 shrink-0" />
       <span className="text-[11px]">{text}</span>
-    </div>
-  );
-}
-
-function ServiceItem({ icon, text }: any) {
-  return (
-    <div className="flex items-center gap-2 p-2 rounded-lg bg-slate-900/50">
-      <span className="text-sm">{icon}</span>
-      <span className="text-xs text-slate-300">{text}</span>
     </div>
   );
 }
@@ -473,7 +366,7 @@ function ClimaModule() {
 
       <div className="space-y-2 max-h-40 overflow-y-auto scrollbar-hide">
         {filtered.map(p => (
-          <button key={p.id} onClick={() => setSelectedPuerto(p)} className={`w-full flex items-center justify-between p-3 rounded-xl transition-all ${selectedPuerto.id === p.id ? 'bg-cyan-500/10 border border-cyan-500/30' : 'bg-slate-800/50 border border-slate-700/50 hover:bg-slate-800'}`}>
+          <button key={p.id} onClick={() => setSelectedPuerto(p)} className={`w-full flex items-center justify-between p-3 rounded-xl transition-all ${selectedPuerto.id === p.id ? 'bg-cyan-500/10 border border-cyan-500/30' : 'bg-slate-800/50 border border-slate-700/50'}`}>
             <div className="flex items-center gap-2">
               <MapPin size={12} className={selectedPuerto.id === p.id ? 'text-cyan-400' : 'text-slate-500'} />
               <span className="text-xs font-medium text-white">{p.nombre}</span>
@@ -490,7 +383,7 @@ function ClimaModule() {
       {selectedPuerto.lluvia && (
         <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 flex items-center gap-2">
           <AlertTriangle size={16} className="text-amber-400 shrink-0" />
-          <p className="text-xs text-amber-300"><strong>⚠️ Alerta Operativa:</strong> Lluvia activa en {selectedPuerto.nombre}. Verificar condiciones antes de inmersión.</p>
+          <p className="text-xs text-amber-300"><strong>⚠️ Alerta:</strong> Lluvia activa en {selectedPuerto.nombre}</p>
         </div>
       )}
 
@@ -498,7 +391,7 @@ function ClimaModule() {
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-base font-bold text-white">{selectedPuerto.nombre}</h3>
-            <p className="text-[11px] text-slate-400">{selectedPuerto.region} • {selectedPuerto.lat.toFixed(2)}°, {selectedPuerto.lon.toFixed(2)}°</p>
+            <p className="text-[11px] text-slate-400">{selectedPuerto.region}</p>
           </div>
           <div className={`px-3 py-1 rounded-lg text-${recomendacion.color}-400 bg-${recomendacion.color}-400/10 border border-${recomendacion.color}-400/20`}>
             <span className="text-[11px] font-bold">{recomendacion.texto}</span>
@@ -527,15 +420,13 @@ function ClimaModule() {
           <div className="bg-slate-900/50 rounded-xl p-3">
             <p className="text-[10px] text-slate-500 mb-1">Viento</p>
             <p className="text-sm font-semibold text-white">{selectedPuerto.viento} KT</p>
-            <p className="text-[10px] text-slate-400">{(selectedPuerto.viento * 1.852).toFixed(1)} km/h • {(selectedPuerto.viento * 0.5144).toFixed(1)} m/s</p>
-            <p className="text-[10px] text-slate-400">Ráfagas: {selectedPuerto.rafagas} KT</p>
-            <p className="text-[10px] text-cyan-400">Beaufort {beaufort.escala}: {beaufort.descripcion}</p>
+            <p className="text-[10px] text-slate-400">{(selectedPuerto.viento * 1.852).toFixed(1)} km/h</p>
+            <p className="text-[10px] text-cyan-400">Beaufort {beaufort.escala}</p>
           </div>
           <div className="bg-slate-900/50 rounded-xl p-3">
             <p className="text-[10px] text-slate-500 mb-1">Estado del Mar</p>
             <p className="text-sm font-semibold text-white">{selectedPuerto.estadoMar}</p>
-            <p className="text-[10px] text-slate-400">Oleaje: {selectedPuerto.oleaje}m</p>
-            <p className="text-[10px] text-slate-400">Dir. Viento: {selectedPuerto.dirViento}° ({dirCardinal})</p>
+            <p className="text-[10px] text-slate-400">Dir: {selectedPuerto.dirViento}° ({dirCardinal})</p>
           </div>
         </div>
 
@@ -554,7 +445,7 @@ function ClimaModule() {
             <div key={i} className={`p-3 rounded-xl ${m.tipo === 'Pleamar' ? 'bg-cyan-500/10 border border-cyan-500/20' : 'bg-slate-900/50 border border-slate-700'}`}>
               <div className="flex items-center justify-between">
                 <span className="text-[10px] text-slate-400">{m.tipo}</span>
-                <span className="text-[10px] text-slate-500">{m.hora} hrs</span>
+                <span className="text-[10px] text-slate-500">{m.hora}</span>
               </div>
               <p className="text-lg font-bold text-white mt-1">{m.altura}m</p>
             </div>
@@ -606,107 +497,47 @@ function ConversorModule() {
   const kmh = (nudos * 1.852).toFixed(1);
   const ms = (nudos * 0.5144).toFixed(2);
 
-  // Request orientation permission (iOS 13+)
   const requestOrientationPermission = async () => {
     setPermissionError('');
-    
-    // Check if DeviceOrientationEvent is available
     if (typeof (DeviceOrientationEvent as any).requestPermission === 'function') {
       try {
         const permission = await (DeviceOrientationEvent as any).requestPermission();
-        if (permission === 'granted') {
-          setPermissionGranted(true);
-          setUseGyroscope(true);
-        } else {
-          setPermissionError('Permiso denegado. Habilite los sensores de movimiento en la configuración del navegador.');
-        }
-      } catch (err) {
-        setPermissionError('Error al solicitar permiso. Use HTTPS o un dispositivo compatible.');
-      }
-    } else {
-      // Android or older iOS - no permission needed
-      setPermissionGranted(true);
-      setUseGyroscope(true);
-    }
+        if (permission === 'granted') { setPermissionGranted(true); setUseGyroscope(true); }
+        else { setPermissionError('Permiso denegado'); }
+      } catch { setPermissionError('Error al solicitar permiso'); }
+    } else { setPermissionGranted(true); setUseGyroscope(true); }
   };
 
-  // Toggle gyroscope
   const toggleGyroscope = () => {
-    if (useGyroscope) {
-      setUseGyroscope(false);
-    } else {
-      requestOrientationPermission();
-    }
+    if (useGyroscope) setUseGyroscope(false);
+    else requestOrientationPermission();
   };
 
-  // Device orientation handler
   useEffect(() => {
     if (useGyroscope && permissionGranted) {
       const handler = (e: any) => {
         let heading = 0;
-        
-        // iOS: use webkitCompassHeading (true north)
-        if (e.webkitCompassHeading !== undefined) {
-          heading = e.webkitCompassHeading;
-        } 
-        // Android/Other: use alpha with screen orientation compensation
+        if (e.webkitCompassHeading !== undefined) heading = e.webkitCompassHeading;
         else if (e.alpha !== null) {
-          const screenOrientation = window.screen.orientation?.angle || 0;
-          heading = (360 - e.alpha - screenOrientation) % 360;
+          const so = window.screen.orientation?.angle || 0;
+          heading = (360 - e.alpha - so) % 360;
           if (heading < 0) heading += 360;
         }
-        
         setCompassAngle(Math.round(heading));
       };
-      
       window.addEventListener('deviceorientation', handler, true);
       return () => window.removeEventListener('deviceorientation', handler, true);
     }
   }, [useGyroscope, permissionGranted]);
 
-  // Get GPS location
   useEffect(() => {
-    if (!navigator.geolocation) {
-      setLocationError('Geolocalización no disponible en este navegador');
-      return;
-    }
-
+    if (!navigator.geolocation) { setLocationError('Geolocalización no disponible'); return; }
     setLocationLoading(true);
-    
     const watchId = navigator.geolocation.watchPosition(
-      (position) => {
-        setLocation({
-          lat: position.coords.latitude,
-          lon: position.coords.longitude,
-          alt: position.coords.altitude,
-          accuracy: position.coords.accuracy
-        });
-        setLocationLoading(false);
-        setLocationError('');
-      },
-      (error) => {
-        setLocationLoading(false);
-        switch (error.code) {
-          case error.PERMISSION_DENIED:
-            setLocationError('Permiso de ubicación denegado');
-            break;
-          case error.POSITION_UNAVAILABLE:
-            setLocationError('Ubicación no disponible');
-            break;
-          case error.TIMEOUT:
-            setLocationError('Tiempo de espera agotado');
-            break;
-          default:
-            setLocationError('Error desconocido');
-        }
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 0
-      }
+      (pos) => { setLocation({ lat: pos.coords.latitude, lon: pos.coords.longitude, alt: pos.coords.altitude, accuracy: pos.coords.accuracy }); setLocationLoading(false); setLocationError(''); },
+      (err) => { setLocationLoading(false); setLocationError(err.code === 1 ? 'Permiso denegado' : err.code === 2 ? 'Ubicación no disponible' : 'Error de ubicación'); },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
-
     return () => navigator.geolocation.clearWatch(watchId);
   }, []);
 
@@ -717,13 +548,11 @@ function ConversorModule() {
         <h2 className="text-lg font-bold text-white">Conversor & Brújula</h2>
       </div>
 
-      {/* Knots Converter */}
       <div className="bg-slate-800/50 rounded-2xl p-4 border border-slate-700 space-y-4">
         <div className="flex items-center gap-2">
           <Zap size={16} className="text-amber-400" />
           <span className="text-sm font-semibold text-white">Transformador Marítimo</span>
         </div>
-
         <div>
           <label className="text-[10px] text-slate-400 uppercase tracking-wider">Velocidad en Nudos (KT)</label>
           <input type="range" min="0" max="80" value={nudos} onChange={e => setNudos(Number(e.target.value))} className="w-full mt-2 accent-cyan-400" />
@@ -733,25 +562,20 @@ function ConversorModule() {
             <span className="text-[10px] text-slate-500">80 KT</span>
           </div>
         </div>
-
         <div className="grid grid-cols-3 gap-2">
           <div className="bg-slate-900/50 rounded-xl p-3 text-center">
             <p className="text-[9px] text-slate-500 uppercase">Nudos</p>
             <p className="text-lg font-bold text-cyan-400">{nudos}</p>
-            <p className="text-[9px] text-slate-500">KT</p>
           </div>
           <div className="bg-slate-900/50 rounded-xl p-3 text-center">
             <p className="text-[9px] text-slate-500 uppercase">Km/h</p>
             <p className="text-lg font-bold text-emerald-400">{kmh}</p>
-            <p className="text-[9px] text-slate-500">km/h</p>
           </div>
           <div className="bg-slate-900/50 rounded-xl p-3 text-center">
             <p className="text-[9px] text-slate-500 uppercase">Metros/s</p>
             <p className="text-lg font-bold text-amber-400">{ms}</p>
-            <p className="text-[9px] text-slate-500">m/s</p>
           </div>
         </div>
-
         <div className="bg-gradient-to-r from-cyan-500/10 to-emerald-500/10 rounded-xl p-3 border border-cyan-500/20">
           <div className="flex items-center justify-between">
             <div>
@@ -765,97 +589,28 @@ function ConversorModule() {
         </div>
       </div>
 
-      {/* Compass Section */}
       <div className="bg-slate-800/50 rounded-2xl p-4 border border-slate-700 space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Compass size={16} className="text-cyan-400" />
             <span className="text-sm font-semibold text-white">Brújula Digital</span>
           </div>
-          <button 
-            onClick={toggleGyroscope} 
-            className={`px-3 py-1.5 rounded-lg text-[10px] font-medium transition-all ${
-              useGyroscope 
-                ? 'bg-emerald-500 text-slate-950' 
-                : 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/30'
-            }`}
-          >
+          <button onClick={toggleGyroscope} className={`px-3 py-1.5 rounded-lg text-[10px] font-medium transition-all ${useGyroscope ? 'bg-emerald-500 text-slate-950' : 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/30'}`}>
             {useGyroscope ? '✓ Activa' : '📱 Activar Sensor'}
           </button>
         </div>
-
-        {/* Permission Error */}
-        {permissionError && (
-          <div className="bg-rose-500/10 border border-rose-500/30 rounded-xl p-3">
-            <p className="text-xs text-rose-400">{permissionError}</p>
-          </div>
-        )}
-
-        {/* Compass Display */}
+        {permissionError && <div className="bg-rose-500/10 border border-rose-500/30 rounded-xl p-3"><p className="text-xs text-rose-400">{permissionError}</p></div>}
         <div className="flex justify-center py-4">
           <div className="relative w-64 h-64">
-            {/* Outer ring with degree marks */}
-            <div 
-              className="absolute inset-0 rounded-full border-4 border-slate-700 bg-slate-900/80"
-              style={{ 
-                transform: `rotate(-${compassAngle}deg)`, 
-                transition: useGyroscope ? 'transform 0.1s ease-out' : 'transform 0.3s ease' 
-              }}
-            >
-              {/* Degree marks every 30 degrees */}
-              {[0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330].map(deg => {
-                const rad = (deg - 90) * (Math.PI / 180);
-                const isCardinal = deg % 90 === 0;
-                const isIntercardinal = deg % 45 === 0;
-                const innerRadius = isCardinal ? 38 : isIntercardinal ? 40 : 42;
-                const outerRadius = 45;
-                
-                const x1 = 50 + innerRadius * Math.cos(rad);
-                const y1 = 50 + innerRadius * Math.sin(rad);
-                const x2 = 50 + outerRadius * Math.cos(rad);
-                const y2 = 50 + outerRadius * Math.sin(rad);
-                
-                return (
-                  <div
-                    key={deg}
-                    className="absolute"
-                    style={{
-                      left: `${x1}%`,
-                      top: `${y1}%`,
-                      width: `${Math.sqrt((x2-x1)**2 + (y2-y1)**2)}%`,
-                      height: isCardinal ? '3px' : '2px',
-                      background: isCardinal ? '#22d3ee' : isIntercardinal ? '#64748b' : '#475569',
-                      transform: `rotate(${deg}deg)`,
-                      transformOrigin: 'left center'
-                    }}
-                  />
-                );
-              })}
-              
-              {/* Cardinal directions */}
+            <div className="absolute inset-0 rounded-full border-4 border-slate-700 bg-slate-900/80" style={{ transform: `rotate(-${compassAngle}deg)`, transition: useGyroscope ? 'transform 0.1s ease-out' : 'transform 0.3s ease' }}>
               {['N', 'E', 'S', 'O'].map((dir, i) => {
                 const angle = i * 90;
                 const rad = (angle - 90) * (Math.PI / 180);
                 const x = 50 + 32 * Math.cos(rad);
                 const y = 50 + 32 * Math.sin(rad);
-                return (
-                  <span 
-                    key={dir} 
-                    className="absolute text-sm font-bold" 
-                    style={{ 
-                      left: `${x}%`, 
-                      top: `${y}%`, 
-                      transform: 'translate(-50%, -50%)', 
-                      color: dir === 'N' ? '#f43f5e' : '#94a3b8' 
-                    }}
-                  >
-                    {dir}
-                  </span>
-                );
+                return <span key={dir} className="absolute text-sm font-bold" style={{ left: `${x}%`, top: `${y}%`, transform: 'translate(-50%, -50%)', color: dir === 'N' ? '#f43f5e' : '#94a3b8' }}>{dir}</span>;
               })}
             </div>
-            
-            {/* Center display */}
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="w-20 h-20 rounded-full bg-slate-800 border-2 border-cyan-400/50 flex items-center justify-center shadow-lg shadow-cyan-400/20">
                 <div className="text-center">
@@ -864,66 +619,29 @@ function ConversorModule() {
                 </div>
               </div>
             </div>
-            
-            {/* Top pointer */}
             <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1">
-              <div className="w-0 h-0 border-l-[8px] border-r-[8px] border-t-[12px] border-l-transparent border-r-transparent border-t-rose-500 drop-shadow-lg" />
+              <div className="w-0 h-0 border-l-[8px] border-r-[8px] border-t-[12px] border-l-transparent border-r-transparent border-t-rose-500" />
             </div>
           </div>
         </div>
-
-        {/* Manual control (when gyroscope is off) */}
         {!useGyroscope && (
           <div>
             <label className="text-[10px] text-slate-400 uppercase tracking-wider">Control Manual</label>
-            <input 
-              type="range" 
-              min="0" 
-              max="360" 
-              value={compassAngle} 
-              onChange={e => setCompassAngle(Number(e.target.value))} 
-              className="w-full mt-2 accent-cyan-400" 
-            />
-            <div className="flex justify-between mt-1">
-              <span className="text-[10px] text-slate-500">0°</span>
-              <span className="text-[10px] text-slate-500">360°</span>
-            </div>
+            <input type="range" min="0" max="360" value={compassAngle} onChange={e => setCompassAngle(Number(e.target.value))} className="w-full mt-2 accent-cyan-400" />
           </div>
         )}
-
-        {/* Sensor status */}
-        <div className="bg-slate-900/50 rounded-xl p-3">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] text-slate-400">Estado del Sensor</span>
-            <div className="flex items-center gap-2">
-              <div className={`w-2 h-2 rounded-full ${useGyroscope ? 'bg-emerald-400 animate-pulse' : 'bg-slate-600'}`} />
-              <span className="text-[10px] text-slate-300">
-                {useGyroscope ? 'Activo' : 'Inactivo'}
-              </span>
-            </div>
-          </div>
-        </div>
       </div>
 
-      {/* GPS Location Section */}
       <div className="bg-slate-800/50 rounded-2xl p-4 border border-slate-700 space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <MapPin size={16} className="text-rose-400" />
             <span className="text-sm font-semibold text-white">Coordenadas GPS</span>
           </div>
-          {locationLoading && (
-            <div className="flex items-center gap-1">
-              <div className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse" />
-              <span className="text-[10px] text-cyan-400">Obteniendo...</span>
-            </div>
-          )}
+          {locationLoading && <div className="flex items-center gap-1"><div className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse" /><span className="text-[10px] text-cyan-400">Obteniendo...</span></div>}
         </div>
-
         {locationError ? (
-          <div className="bg-rose-500/10 border border-rose-500/30 rounded-xl p-3">
-            <p className="text-xs text-rose-400">{locationError}</p>
-          </div>
+          <div className="bg-rose-500/10 border border-rose-500/30 rounded-xl p-3"><p className="text-xs text-rose-400">{locationError}</p></div>
         ) : location ? (
           <div className="space-y-2">
             <div className="grid grid-cols-2 gap-2">
@@ -938,34 +656,26 @@ function ConversorModule() {
                 <p className="text-[9px] text-slate-400">{location.lon >= 0 ? 'Este' : 'Oeste'}</p>
               </div>
             </div>
-            
             {location.alt !== null && (
               <div className="bg-slate-900/50 rounded-xl p-3">
                 <p className="text-[9px] text-slate-500 uppercase mb-1">Altitud</p>
                 <p className="text-sm font-bold text-white">{location.alt.toFixed(1)} m</p>
               </div>
             )}
-            
             <div className="bg-slate-900/50 rounded-xl p-3">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-[9px] text-slate-500 uppercase mb-1">Precisión GPS</p>
                   <p className="text-sm font-bold text-emerald-400">±{location.accuracy.toFixed(0)} m</p>
                 </div>
-                <div className={`px-2 py-1 rounded-lg text-[9px] font-medium ${
-                  location.accuracy < 10 ? 'bg-emerald-500/20 text-emerald-400' :
-                  location.accuracy < 50 ? 'bg-amber-500/20 text-amber-400' :
-                  'bg-rose-500/20 text-rose-400'
-                }`}>
+                <div className={`px-2 py-1 rounded-lg text-[9px] font-medium ${location.accuracy < 10 ? 'bg-emerald-500/20 text-emerald-400' : location.accuracy < 50 ? 'bg-amber-500/20 text-amber-400' : 'bg-rose-500/20 text-rose-400'}`}>
                   {location.accuracy < 10 ? 'Alta' : location.accuracy < 50 ? 'Media' : 'Baja'}
                 </div>
               </div>
             </div>
           </div>
         ) : (
-          <div className="bg-slate-900/50 rounded-xl p-3 text-center">
-            <p className="text-xs text-slate-500">Esperando señal GPS...</p>
-          </div>
+          <div className="bg-slate-900/50 rounded-xl p-3 text-center"><p className="text-xs text-slate-500">Esperando señal GPS...</p></div>
         )}
       </div>
     </div>
@@ -981,9 +691,8 @@ function CatalogoModule({ cart, setCart, products }: any) {
   const [quantity, setQuantity] = useState(1);
   const [selectedPlan, setSelectedPlan] = useState<any>(null);
 
-  const categories = ['Todos', ...Array.from(new Set(products.map(p => p.categoria)))];
-
-  const filtered = products.filter(p => {
+  const categories = ['Todos', ...Array.from(new Set(products.map((p: any) => p.categoria)))];
+  const filtered = products.filter((p: any) => {
     if (catFilter !== 'Todos' && p.categoria !== catFilter) return false;
     if (search && !p.nombre.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
@@ -991,18 +700,8 @@ function CatalogoModule({ cart, setCart, products }: any) {
 
   const addToCart = () => {
     if (!selectedProduct) return;
-    const item = {
-      product: selectedProduct,
-      mode: 'comprar',
-      quantity,
-      days: 0,
-      plan: selectedPlan,
-      id: Date.now(),
-    };
-    setCart([...cart, item]);
-    setSelectedProduct(null);
-    setQuantity(1);
-    setSelectedPlan(null);
+    setCart([...cart, { product: selectedProduct, quantity, plan: selectedPlan, id: Date.now() }]);
+    setSelectedProduct(null); setQuantity(1); setSelectedPlan(null);
   };
 
   const getPrice = () => {
@@ -1018,39 +717,26 @@ function CatalogoModule({ cart, setCart, products }: any) {
         <Package size={20} className="text-amber-400" />
         <h2 className="text-lg font-bold text-white">Catálogo Gerdiver</h2>
       </div>
-
       <div className="relative">
         <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
         <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar producto..." className="w-full pl-9 pr-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:border-amber-500 focus:outline-none" />
       </div>
-
       <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-        {categories.map(c => (
+        {categories.map((c: any) => (
           <button key={c} onClick={() => setCatFilter(c)} className={`px-3 py-1.5 rounded-lg text-[11px] font-medium whitespace-nowrap transition-all ${catFilter === c ? 'bg-amber-500 text-slate-950' : 'bg-slate-800 text-slate-400 border border-slate-700'}`}>{c}</button>
         ))}
       </div>
-
       <div className="space-y-3">
-        {filtered.map(p => (
+        {filtered.map((p: any) => (
           <div key={p.id} className="bg-slate-800/50 rounded-xl p-4 border border-slate-700 hover:border-amber-500/30 transition-all">
             <div className="flex items-start gap-3">
-              <div className="w-16 h-16 rounded-xl bg-slate-900 overflow-hidden flex-shrink-0 flex items-center justify-center">
-                {p.imagen && p.imagen.startsWith('http') ? (
-                  <img src={p.imagen} alt={p.nombre} className="w-full h-full object-cover" />
-                ) : (
-                  <span className="text-2xl">{p.imagen || '📦'}</span>
-                )}
-              </div>
+              <div className="w-16 h-16 rounded-xl bg-slate-900 flex items-center justify-center text-2xl flex-shrink-0">{p.imagen}</div>
               <div className="flex-1 min-w-0">
                 <h3 className="text-sm font-semibold text-white truncate">{p.nombre}</h3>
                 <p className="text-[10px] text-slate-400">{p.categoria} • Stock: {p.stock}</p>
-                <div className="flex items-center gap-3 mt-1">
-                  <span className="text-xs font-bold text-emerald-400">{formatCLP(p.precioVenta)}</span>
-                </div>
+                <p className="text-xs font-bold text-emerald-400 mt-1">{formatCLP(p.precioVenta)}</p>
               </div>
-              <button onClick={() => setSelectedProduct(p)} className="px-3 py-1.5 bg-amber-500/10 border border-amber-500/30 rounded-lg text-amber-400 text-[11px] font-medium hover:bg-amber-500/20 transition-all">
-                Ver
-              </button>
+              <button onClick={() => setSelectedProduct(p)} className="px-3 py-1.5 bg-amber-500/10 border border-amber-500/30 rounded-lg text-amber-400 text-[11px] font-medium">Ver</button>
             </div>
           </div>
         ))}
@@ -1064,31 +750,17 @@ function CatalogoModule({ cart, setCart, products }: any) {
                 <h3 className="text-base font-bold text-white">{selectedProduct.nombre}</h3>
                 <button onClick={() => setSelectedProduct(null)} className="p-1 rounded-lg bg-slate-800"><X size={16} className="text-slate-400" /></button>
               </div>
-
               <div className="flex items-center gap-3">
-                <div className="w-24 h-24 rounded-xl bg-slate-800 overflow-hidden flex-shrink-0 flex items-center justify-center">
-                  {selectedProduct.imagen && selectedProduct.imagen.startsWith('http') ? (
-                    <img src={selectedProduct.imagen} alt={selectedProduct.nombre} className="w-full h-full object-cover" />
-                  ) : (
-                    <span className="text-3xl">{selectedProduct.imagen || '📦'}</span>
-                  )}
-                </div>
+                <div className="w-24 h-24 rounded-xl bg-slate-800 flex items-center justify-center text-4xl flex-shrink-0">{selectedProduct.imagen}</div>
                 <div>
                   <p className="text-xs text-slate-400">{selectedProduct.categoria}</p>
                   <p className="text-sm text-slate-300 mt-1">{selectedProduct.descripcion}</p>
                 </div>
               </div>
-
-              <div>
-                <button className="w-full py-2.5 rounded-xl text-xs font-semibold bg-emerald-500 text-slate-950">
-                  💰 Comprar
-                </button>
-              </div>
-
               <div>
                 <p className="text-[10px] text-slate-400 uppercase tracking-wider mb-2">Planes de Descuento</p>
                 <div className="space-y-2">
-                  {plans.filter(pl => pl.tipo === 'venta').map(pl => (
+                  {plans.filter((pl: any) => pl.tipo === 'venta').map((pl: any) => (
                     <button key={pl.id} onClick={() => setSelectedPlan(selectedPlan?.id === pl.id ? null : pl)} className={`w-full p-3 rounded-xl text-left transition-all ${selectedPlan?.id === pl.id ? 'bg-cyan-500/10 border border-cyan-500/30' : 'bg-slate-800 border border-slate-700'}`}>
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-medium text-white">{pl.nombre}</span>
@@ -1099,7 +771,6 @@ function CatalogoModule({ cart, setCart, products }: any) {
                   ))}
                 </div>
               </div>
-
               <div>
                 <label className="text-[10px] text-slate-400">Cantidad</label>
                 <div className="flex items-center gap-2 mt-1">
@@ -1108,16 +779,14 @@ function CatalogoModule({ cart, setCart, products }: any) {
                   <button onClick={() => setQuantity(quantity + 1)} className="w-8 h-8 rounded-lg bg-slate-800 text-white flex items-center justify-center">+</button>
                 </div>
               </div>
-
               <div className="bg-slate-800 rounded-xl p-3 border border-slate-700">
                 <div className="flex justify-between items-center">
                   <span className="text-xs text-slate-400">Total</span>
                   <span className="text-xl font-bold text-emerald-400">{formatCLP(getPrice())}</span>
                 </div>
-                {selectedPlan && <p className="text-[10px] text-cyan-400 mt-1">Plan aplicado: {selectedPlan.nombre} (-{selectedPlan.descuento}%)</p>}
+                {selectedPlan && <p className="text-[10px] text-cyan-400 mt-1">Plan: {selectedPlan.nombre} (-{selectedPlan.descuento}%)</p>}
               </div>
-
-              <button onClick={addToCart} className="w-full py-3 bg-gradient-to-r from-amber-500 to-amber-400 text-slate-950 font-bold rounded-xl text-sm hover:opacity-90 transition-opacity">
+              <button onClick={addToCart} className="w-full py-3 bg-gradient-to-r from-amber-500 to-amber-400 text-slate-950 font-bold rounded-xl text-sm">
                 <ShoppingCart size={16} className="inline mr-2" />Agregar al Carrito
               </button>
             </div>
@@ -1130,77 +799,298 @@ function CatalogoModule({ cart, setCart, products }: any) {
 
 // ==================== TALLER MODULE ====================
 function TallerModule() {
+  const [ordenes, setOrdenes] = useState<any[]>([
+    { id: 'GERD-8942-PM', numeroSerie: 'CM-4821-A', pruebaAerostatica: 'AP-300-OK', anioFabricacion: '2019', foto: null, paso: 4, cliente: 'Salmones Austral S.A.', fecha: '2024-01-15' },
+    { id: 'GERD-7631-AN', numeroSerie: 'BT-7733-C', pruebaAerostatica: 'AP-250-OK', anioFabricacion: '2020', foto: null, paso: 6, cliente: 'Multiexport Foods', fecha: '2024-01-10' },
+    { id: 'GERD-9105-CT', numeroSerie: 'OX-1192-B', pruebaAerostatica: 'Pendiente', anioFabricacion: '2021', foto: null, paso: 2, cliente: 'Marine Harvest Chile', fecha: '2024-01-18' },
+  ]);
+  const [showForm, setShowForm] = useState(false);
+  const [editingOrden, setEditingOrden] = useState<any>(null);
   const [searchCode, setSearchCode] = useState('');
-  const [selectedOrden, setSelectedOrden] = useState(ORDENES_TALLER[0]);
+  const [selectedOrden, setSelectedOrden] = useState<any>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const filtered = ORDENES_TALLER.filter(o =>
+  const [formData, setFormData] = useState({
+    id: '',
+    numeroSerie: '',
+    pruebaAerostatica: '',
+    anioFabricacion: '',
+    foto: null as string | null,
+    cliente: '',
+  });
+
+  const PASOS_TALLER = [
+    { nombre: 'Recepción', icon: '📥', desc: 'Ingreso y registro' },
+    { nombre: 'Desvalvulado', icon: '🔧', desc: 'Retiro de válvula' },
+    { nombre: 'Prueba Hidrostática', icon: '💧', desc: 'Prueba a 300 bar' },
+    { nombre: 'Secado', icon: '☀️', desc: 'Secado con nitrógeno' },
+    { nombre: 'Carga O2', icon: '🫧', desc: 'Carga a 200 bar' },
+    { nombre: 'Listo para retiro', icon: '✅', desc: 'Certificado' },
+  ];
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData({ ...formData, foto: reader.result as string });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const saveOrden = () => {
+    if (!formData.id || !formData.numeroSerie) return;
+    if (editingOrden) {
+      setOrdenes(ordenes.map(o => o.id === editingOrden.id ? { ...o, ...formData } : o));
+    } else {
+      setOrdenes([...ordenes, { ...formData, paso: 1, fecha: new Date().toISOString().split('T')[0] }]);
+    }
+    setShowForm(false);
+    setEditingOrden(null);
+    setFormData({ id: '', numeroSerie: '', pruebaAerostatica: '', anioFabricacion: '', foto: null, cliente: '' });
+  };
+
+  const editOrden = (orden: any) => {
+    setEditingOrden(orden);
+    setFormData({
+      id: orden.id,
+      numeroSerie: orden.numeroSerie,
+      pruebaAerostatica: orden.pruebaAerostatica,
+      anioFabricacion: orden.anioFabricacion,
+      foto: orden.foto,
+      cliente: orden.cliente,
+    });
+    setShowForm(true);
+  };
+
+  const deleteOrden = (id: string) => {
+    setOrdenes(ordenes.filter(o => o.id !== id));
+    if (selectedOrden?.id === id) setSelectedOrden(null);
+  };
+
+  const filtered = ordenes.filter(o =>
     o.id.toLowerCase().includes(searchCode.toLowerCase()) ||
-    o.cilindro.toLowerCase().includes(searchCode.toLowerCase()) ||
+    o.numeroSerie.toLowerCase().includes(searchCode.toLowerCase()) ||
     o.cliente.toLowerCase().includes(searchCode.toLowerCase())
   );
 
   return (
     <div className="p-4 space-y-4">
-      <div className="flex items-center gap-2 mb-2">
-        <Wrench size={20} className="text-rose-400" />
-        <h2 className="text-lg font-bold text-white">Trazabilidad de Taller</h2>
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2">
+          <Wrench size={20} className="text-rose-400" />
+          <h2 className="text-lg font-bold text-white">Taller</h2>
+        </div>
+        <button onClick={() => { setShowForm(true); setEditingOrden(null); setFormData({ id: '', numeroSerie: '', pruebaAerostatica: '', anioFabricacion: '', foto: null, cliente: '' }); }} className="px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/30 rounded-lg text-emerald-400 text-[11px] font-semibold">
+          <Plus size={12} className="inline mr-1" />Nueva
+        </button>
       </div>
-      <p className="text-xs text-slate-400 -mt-2">Prueba Hidrostática de Cilindros</p>
+      <p className="text-xs text-slate-400 -mt-2">Planilla de Prueba Hidrostática de Cilindros</p>
 
       <div className="relative">
         <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
-        <input value={searchCode} onChange={e => setSearchCode(e.target.value)} placeholder="Buscar por código (ej: GERD-8942-PM)..." className="w-full pl-9 pr-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:border-rose-500 focus:outline-none" />
+        <input value={searchCode} onChange={e => setSearchCode(e.target.value)} placeholder="Buscar por código o N° serie..." className="w-full pl-9 pr-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:border-rose-500 focus:outline-none" />
       </div>
 
+      {/* Lista de órdenes */}
       <div className="space-y-2">
         {filtered.map(o => (
-          <button key={o.id} onClick={() => setSelectedOrden(o)} className={`w-full p-3 rounded-xl text-left transition-all ${selectedOrden.id === o.id ? 'bg-rose-500/10 border border-rose-500/30' : 'bg-slate-800/50 border border-slate-700/50'}`}>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-bold text-white">{o.id}</p>
-                <p className="text-[10px] text-slate-400">{o.cilindro}</p>
+          <div key={o.id} className="bg-slate-800/50 rounded-xl border border-slate-700 overflow-hidden">
+            <button onClick={() => setSelectedOrden(selectedOrden?.id === o.id ? null : o)} className="w-full p-3 text-left">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  {o.foto ? (
+                    <img src={o.foto} alt="Botella" className="w-10 h-10 rounded-lg object-cover" />
+                  ) : (
+                    <div className="w-10 h-10 rounded-lg bg-slate-900 flex items-center justify-center text-lg">🫧</div>
+                  )}
+                  <div>
+                    <p className="text-xs font-bold text-white">{o.id}</p>
+                    <p className="text-[10px] text-slate-400">N° Serie: {o.numeroSerie}</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-[10px] text-rose-400">Paso {o.paso}/6</p>
+                  <p className="text-[9px] text-slate-500">{o.fecha}</p>
+                </div>
               </div>
-              <div className="text-right">
-                <p className="text-[10px] text-rose-400">Paso {o.paso}/6</p>
-                <p className="text-[9px] text-slate-500">{o.fecha}</p>
+              <div className="mt-2 w-full h-1.5 bg-slate-700 rounded-full overflow-hidden">
+                <div className="h-full bg-gradient-to-r from-rose-500 to-amber-400 rounded-full transition-all" style={{ width: `${(o.paso / 6) * 100}%` }} />
               </div>
-            </div>
-            <div className="mt-2 w-full h-1.5 bg-slate-700 rounded-full overflow-hidden">
-              <div className="h-full bg-gradient-to-r from-rose-500 to-amber-400 rounded-full transition-all" style={{ width: `${(o.paso / 6) * 100}%` }} />
-            </div>
-          </button>
+            </button>
+            
+            {/* Expanded detail */}
+            {selectedOrden?.id === o.id && (
+              <div className="px-3 pb-3 border-t border-slate-700 pt-3 space-y-3">
+                {/* Planilla de datos */}
+                <div className="bg-slate-900/50 rounded-xl p-3 space-y-2">
+                  <h4 className="text-[11px] font-semibold text-cyan-400 uppercase tracking-wider">Planilla de Registro</h4>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <p className="text-[9px] text-slate-500">N° Serie</p>
+                      <p className="text-xs font-medium text-white">{o.numeroSerie}</p>
+                    </div>
+                    <div>
+                      <p className="text-[9px] text-slate-500">Prueba Aerostática</p>
+                      <p className="text-xs font-medium text-white">{o.pruebaAerostatica}</p>
+                    </div>
+                    <div>
+                      <p className="text-[9px] text-slate-500">Año Fabricación</p>
+                      <p className="text-xs font-medium text-white">{o.anioFabricacion}</p>
+                    </div>
+                    <div>
+                      <p className="text-[9px] text-slate-500">Cliente</p>
+                      <p className="text-xs font-medium text-white">{o.cliente}</p>
+                    </div>
+                  </div>
+                  {o.foto && (
+                    <div>
+                      <p className="text-[9px] text-slate-500 mb-1">Foto del Producto</p>
+                      <img src={o.foto} alt="Producto" className="w-full h-32 rounded-lg object-cover" />
+                    </div>
+                  )}
+                </div>
+
+                {/* Timeline */}
+                <div className="space-y-0">
+                  {PASOS_TALLER.map((paso, i) => {
+                    const isCompleted = i < o.paso;
+                    const isCurrent = i === o.paso - 1;
+                    return (
+                      <div key={i} className="flex items-start gap-3">
+                        <div className="flex flex-col items-center">
+                          <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs ${isCompleted ? 'bg-emerald-500/20 border-2 border-emerald-400' : isCurrent ? 'bg-amber-500/20 border-2 border-amber-400 animate-pulse' : 'bg-slate-800 border border-slate-700'}`}>
+                            {isCompleted ? '✓' : paso.icon}
+                          </div>
+                          {i < PASOS_TALLER.length - 1 && <div className={`w-0.5 h-6 ${isCompleted ? 'bg-emerald-400' : 'bg-slate-700'}`} />}
+                        </div>
+                        <div className="pt-0.5">
+                          <p className={`text-[11px] font-medium ${isCompleted ? 'text-emerald-400' : isCurrent ? 'text-amber-400' : 'text-slate-500'}`}>{paso.nombre}</p>
+                          <p className="text-[9px] text-slate-500">{paso.desc}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Actions */}
+                <div className="flex gap-2">
+                  <button onClick={() => editOrden(o)} className="flex-1 py-2 bg-slate-700 rounded-lg text-[11px] text-slate-300 flex items-center justify-center gap-1">
+                    <Edit size={12} />Editar
+                  </button>
+                  <button onClick={() => deleteOrden(o.id)} className="flex-1 py-2 bg-rose-500/20 rounded-lg text-[11px] text-rose-400 flex items-center justify-center gap-1">
+                    <Trash2 size={12} />Eliminar
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         ))}
       </div>
 
-      {selectedOrden && (
-        <div className="bg-slate-800/50 rounded-2xl p-4 border border-slate-700">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h3 className="text-sm font-bold text-white">{selectedOrden.id}</h3>
-              <p className="text-[10px] text-slate-400">{selectedOrden.cliente} • {selectedOrden.cilindro}</p>
-            </div>
-            <span className="text-[10px] px-2 py-1 bg-rose-500/20 text-rose-400 rounded-full">Paso {selectedOrden.paso}/6</span>
-          </div>
+      {/* Form Modal */}
+      {showForm && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-end justify-center">
+          <div className="w-full max-w-[390px] bg-slate-900 rounded-t-3xl border-t border-slate-700 max-h-[90vh] overflow-y-auto">
+            <div className="p-4 space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-base font-bold text-white">{editingOrden ? 'Editar Orden' : 'Nueva Orden de Taller'}</h3>
+                <button onClick={() => { setShowForm(false); setEditingOrden(null); }} className="p-1 rounded-lg bg-slate-800"><X size={16} className="text-slate-400" /></button>
+              </div>
 
-          <div className="space-y-0">
-            {PASOS_TALLER.map((paso, i) => {
-              const isCompleted = i < selectedOrden.paso;
-              const isCurrent = i === selectedOrden.paso - 1;
-              return (
-                <div key={i} className="flex items-start gap-3">
-                  <div className="flex flex-col items-center">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm ${isCompleted ? 'bg-emerald-500/20 border-2 border-emerald-400' : isCurrent ? 'bg-amber-500/20 border-2 border-amber-400 animate-pulse' : 'bg-slate-800 border border-slate-700'}`}>
-                      {isCompleted ? '✓' : paso.icon}
+              {/* Photo Upload */}
+              <div>
+                <label className="text-[10px] text-slate-400 uppercase tracking-wider mb-2 block">Foto de la Botella / Producto</label>
+                <div className="relative">
+                  {formData.foto ? (
+                    <div className="relative w-full h-40 rounded-xl overflow-hidden bg-slate-800 border border-slate-700">
+                      <img src={formData.foto} alt="Preview" className="w-full h-full object-cover" />
+                      <button onClick={() => setFormData({ ...formData, foto: null })} className="absolute top-2 right-2 p-1.5 bg-rose-500/80 rounded-lg">
+                        <X size={14} className="text-white" />
+                      </button>
                     </div>
-                    {i < PASOS_TALLER.length - 1 && <div className={`w-0.5 h-8 ${isCompleted ? 'bg-emerald-400' : 'bg-slate-700'}`} />}
-                  </div>
-                  <div className="pt-1">
-                    <p className={`text-xs font-medium ${isCompleted ? 'text-emerald-400' : isCurrent ? 'text-amber-400' : 'text-slate-500'}`}>{paso.nombre}</p>
-                    <p className="text-[10px] text-slate-500">{paso.desc}</p>
-                  </div>
+                  ) : (
+                    <button onClick={() => fileInputRef.current?.click()} className="w-full h-40 rounded-xl bg-slate-800 border-2 border-dashed border-slate-600 flex flex-col items-center justify-center gap-2 hover:border-cyan-500/50 transition-colors">
+                      <Camera size={32} className="text-slate-500" />
+                      <span className="text-xs text-slate-400">Toca para subir foto</span>
+                      <span className="text-[9px] text-slate-500">JPG, PNG • Máx 5MB</span>
+                    </button>
+                  )}
+                  <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
                 </div>
-              );
-            })}
+              </div>
+
+              {/* Form Fields */}
+              <div className="space-y-3">
+                <div>
+                  <label className="text-[10px] text-slate-400 uppercase tracking-wider mb-1 block">Código de Orden *</label>
+                  <input
+                    value={formData.id}
+                    onChange={e => setFormData({ ...formData, id: e.target.value })}
+                    placeholder="Ej: GERD-1234-PM"
+                    className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-rose-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[10px] text-slate-400 uppercase tracking-wider mb-1 block">Número de Serie *</label>
+                  <input
+                    value={formData.numeroSerie}
+                    onChange={e => setFormData({ ...formData, numeroSerie: e.target.value })}
+                    placeholder="Ej: CM-4821-A (letras y números)"
+                    className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-rose-500"
+                  />
+                  <p className="text-[9px] text-slate-500 mt-1">Ingrese letras y números según la etiqueta del cilindro</p>
+                </div>
+
+                <div>
+                  <label className="text-[10px] text-slate-400 uppercase tracking-wider mb-1 block">Prueba Aerostática</label>
+                  <input
+                    value={formData.pruebaAerostatica}
+                    onChange={e => setFormData({ ...formData, pruebaAerostatica: e.target.value })}
+                    placeholder="Ej: AP-300-OK (letras y números)"
+                    className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-rose-500"
+                  />
+                  <p className="text-[9px] text-slate-500 mt-1">Resultado de la prueba (presión, estado, etc.)</p>
+                </div>
+
+                <div>
+                  <label className="text-[10px] text-slate-400 uppercase tracking-wider mb-1 block">Año de Fabricación</label>
+                  <input
+                    type="text"
+                    value={formData.anioFabricacion}
+                    onChange={e => {
+                      const val = e.target.value.replace(/[^0-9]/g, '').slice(0, 4);
+                      setFormData({ ...formData, anioFabricacion: val });
+                    }}
+                    placeholder="Ej: 2019"
+                    maxLength={4}
+                    className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-rose-500"
+                  />
+                  <p className="text-[9px] text-slate-500 mt-1">Año grabado en la botella (4 dígitos)</p>
+                </div>
+
+                <div>
+                  <label className="text-[10px] text-slate-400 uppercase tracking-wider mb-1 block">Cliente</label>
+                  <input
+                    value={formData.cliente}
+                    onChange={e => setFormData({ ...formData, cliente: e.target.value })}
+                    placeholder="Ej: Salmones Austral S.A."
+                    className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-rose-500"
+                  />
+                </div>
+              </div>
+
+              <button
+                onClick={saveOrden}
+                disabled={!formData.id || !formData.numeroSerie}
+                className="w-full py-3 bg-gradient-to-r from-rose-500 to-rose-400 text-white font-bold rounded-xl text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Check size={16} className="inline mr-2" />
+                {editingOrden ? 'Guardar Cambios' : 'Crear Orden'}
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -1212,52 +1102,21 @@ function TallerModule() {
 function AdminModule({ products, setProducts }: any) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [pin, setPin] = useState('');
-
   const [showForm, setShowForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState<any>(null);
-  const [formData, setFormData] = useState({
-    nombre: '',
-    categoria: '',
-    precioVenta: 0,
-    precioArriendo: 0,
-    stock: 0,
-    imagen: '',
-    descripcion: ''
-  });
+  const [formData, setFormData] = useState({ nombre: '', categoria: '', precioVenta: 0, stock: 0, imagen: '📦', descripcion: '' });
 
-  const handleLogin = () => {
-    if (pin === '1234') setIsAuthenticated(true);
-  };
+  const handleLogin = () => { if (pin === '1234') setIsAuthenticated(true); };
 
   const saveProduct = () => {
     if (!formData.nombre || !formData.categoria) return;
-    
     if (editingProduct) {
-      setProducts(products.map(p => p.id === editingProduct.id ? { ...formData, id: p.id } : p));
+      setProducts(products.map((p: any) => p.id === editingProduct.id ? { ...formData, id: p.id } : p));
     } else {
       setProducts([...products, { ...formData, id: Date.now() }]);
     }
-    setShowForm(false);
-    setEditingProduct(null);
-    setFormData({ nombre: '', categoria: '', precioVenta: 0, precioArriendo: 0, stock: 0, imagen: '', descripcion: '' });
-  };
-
-  const editProduct = (product: any) => {
-    setEditingProduct(product);
-    setFormData({
-      nombre: product.nombre,
-      categoria: product.categoria,
-      precioVenta: product.precioVenta,
-      precioArriendo: product.precioArriendo,
-      stock: product.stock,
-      imagen: product.imagen,
-      descripcion: product.descripcion
-    });
-    setShowForm(true);
-  };
-
-  const deleteProduct = (id: number) => {
-    setProducts(products.filter(p => p.id !== id));
+    setShowForm(false); setEditingProduct(null);
+    setFormData({ nombre: '', categoria: '', precioVenta: 0, stock: 0, imagen: '📦', descripcion: '' });
   };
 
   if (!isAuthenticated) {
@@ -1286,148 +1145,82 @@ function AdminModule({ products, setProducts }: any) {
           <Settings size={20} className="text-rose-400" />
           <h2 className="text-lg font-bold text-white">Admin</h2>
         </div>
-        <button onClick={() => setIsAuthenticated(false)} className="px-3 py-1.5 bg-slate-800 rounded-lg text-[10px] text-slate-400 hover:text-white">
+        <button onClick={() => setIsAuthenticated(false)} className="px-3 py-1.5 bg-slate-800 rounded-lg text-[10px] text-slate-400">
           <Lock size={12} className="inline mr-1" />Salir
         </button>
       </div>
 
-      {/* Stats */}
       <div className="bg-slate-800/50 rounded-xl p-3 border border-slate-700">
         <p className="text-[10px] text-slate-500">Total Productos</p>
         <p className="text-2xl font-bold text-white">{products.length}</p>
       </div>
 
-      {/* Title */}
       <div className="flex items-center gap-2">
         <Package size={16} className="text-rose-400" />
         <h3 className="text-sm font-semibold text-white">Gestión de Productos</h3>
       </div>
 
       <div className="space-y-3">
-        <button onClick={() => { setShowForm(true); setEditingProduct(null); setFormData({ nombre: '', categoria: '', precioVenta: 0, precioArriendo: 0, stock: 0, imagen: '', descripcion: '' }); }} className="w-full py-2.5 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-emerald-400 text-xs font-semibold">
+        <button onClick={() => { setShowForm(true); setEditingProduct(null); setFormData({ nombre: '', categoria: '', precioVenta: 0, stock: 0, imagen: '📦', descripcion: '' }); }} className="w-full py-2.5 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-emerald-400 text-xs font-semibold">
           <Plus size={14} className="inline mr-1" />Nuevo Producto
         </button>
 
-        {products.map(p => (
+        {products.map((p: any) => (
           <div key={p.id} className="bg-slate-800/50 rounded-xl p-3 border border-slate-700">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-lg bg-slate-900 overflow-hidden flex-shrink-0 flex items-center justify-center">
-                {p.imagen && p.imagen.startsWith('http') ? (
-                  <img src={p.imagen} alt={p.nombre} className="w-full h-full object-cover" />
-                ) : (
-                  <span className="text-lg">{p.imagen || '📦'}</span>
-                )}
-              </div>
+              <div className="w-12 h-12 rounded-lg bg-slate-900 flex items-center justify-center text-lg flex-shrink-0">{p.imagen}</div>
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-semibold text-white truncate">{p.nombre}</p>
                 <p className="text-[10px] text-slate-400">{p.categoria} • Stock: {p.stock}</p>
                 <p className="text-[10px] text-emerald-400">{formatCLP(p.precioVenta)}</p>
               </div>
               <div className="flex gap-1">
-                <button onClick={() => editProduct(p)} className="p-1.5 rounded-lg bg-slate-700 text-slate-400 hover:text-white">
-                  <Edit size={12} />
-                </button>
-                <button onClick={() => deleteProduct(p.id)} className="p-1.5 rounded-lg bg-rose-500/20 text-rose-400 hover:bg-rose-500/30">
-                  <Trash2 size={12} />
-                </button>
+                <button onClick={() => { setEditingProduct(p); setFormData({ nombre: p.nombre, categoria: p.categoria, precioVenta: p.precioVenta, stock: p.stock, imagen: p.imagen, descripcion: p.descripcion }); setShowForm(true); }} className="p-1.5 rounded-lg bg-slate-700 text-slate-400"><Edit size={12} /></button>
+                <button onClick={() => setProducts(products.filter((pr: any) => pr.id !== p.id))} className="p-1.5 rounded-lg bg-rose-500/20 text-rose-400"><Trash2 size={12} /></button>
               </div>
             </div>
           </div>
         ))}
       </div>
 
-      {/* Product Form Modal */}
       {showForm && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-end justify-center">
           <div className="w-full max-w-[390px] bg-slate-900 rounded-t-3xl border-t border-slate-700 max-h-[90vh] overflow-y-auto">
             <div className="p-4 space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-base font-bold text-white">{editingProduct ? 'Editar Producto' : 'Nuevo Producto'}</h3>
-                <button onClick={() => { setShowForm(false); setEditingProduct(null); }} className="p-1 rounded-lg bg-slate-800">
-                  <X size={16} className="text-slate-400" />
-                </button>
+                <button onClick={() => { setShowForm(false); setEditingProduct(null); }} className="p-1 rounded-lg bg-slate-800"><X size={16} className="text-slate-400" /></button>
               </div>
-
-              {/* Image Preview */}
-              {formData.imagen && formData.imagen.startsWith('http') && (
-                <div className="w-full h-48 rounded-xl bg-slate-800 overflow-hidden border border-slate-700">
-                  <img src={formData.imagen} alt="Vista previa" className="w-full h-full object-cover" />
-                </div>
-              )}
-
               <div className="space-y-3">
                 <div>
-                  <label className="text-[10px] text-slate-400 uppercase tracking-wider mb-1 block">Nombre del producto *</label>
-                  <input
-                    value={formData.nombre}
-                    onChange={e => setFormData({...formData, nombre: e.target.value})}
-                    placeholder="Ej: Traje Neopreno 7mm"
-                    className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-rose-500"
-                  />
+                  <label className="text-[10px] text-slate-400 uppercase tracking-wider mb-1 block">Nombre *</label>
+                  <input value={formData.nombre} onChange={e => setFormData({ ...formData, nombre: e.target.value })} placeholder="Nombre del producto" className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-rose-500" />
                 </div>
-
                 <div>
                   <label className="text-[10px] text-slate-400 uppercase tracking-wider mb-1 block">Categoría *</label>
-                  <input
-                    value={formData.categoria}
-                    onChange={e => setFormData({...formData, categoria: e.target.value})}
-                    placeholder="Ej: Trajes, Reguladores, Equipos"
-                    className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-rose-500"
-                  />
+                  <input value={formData.categoria} onChange={e => setFormData({ ...formData, categoria: e.target.value })} placeholder="Categoría" className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-rose-500" />
                 </div>
-
                 <div>
-                  <label className="text-[10px] text-slate-400 uppercase tracking-wider mb-1 block">URL de imagen</label>
-                  <input
-                    value={formData.imagen}
-                    onChange={e => setFormData({...formData, imagen: e.target.value})}
-                    placeholder="https://ejemplo.com/imagen.jpg"
-                    className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-rose-500"
-                  />
-                  <p className="text-[9px] text-slate-500 mt-1">Ingresa la URL de una imagen del producto</p>
+                  <label className="text-[10px] text-slate-400 uppercase tracking-wider mb-1 block">Emoji / Ícono</label>
+                  <input value={formData.imagen} onChange={e => setFormData({ ...formData, imagen: e.target.value })} placeholder="📦" className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-rose-500" />
                 </div>
-
                 <div>
                   <label className="text-[10px] text-slate-400 uppercase tracking-wider mb-1 block">Descripción</label>
-                  <textarea
-                    value={formData.descripcion}
-                    onChange={e => setFormData({...formData, descripcion: e.target.value})}
-                    placeholder="Descripción detallada del producto, características técnicas, materiales, etc."
-                    rows={4}
-                    className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-rose-500 resize-none"
-                  />
+                  <textarea value={formData.descripcion} onChange={e => setFormData({ ...formData, descripcion: e.target.value })} placeholder="Descripción del producto" rows={3} className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-rose-500 resize-none" />
                 </div>
-
-                <div>
-                  <label className="text-[10px] text-slate-400 uppercase tracking-wider mb-1 block">Precio Venta (CLP)</label>
-                  <input
-                    type="number"
-                    value={formData.precioVenta || ''}
-                    onChange={e => setFormData({...formData, precioVenta: Number(e.target.value)})}
-                    placeholder="450000"
-                    className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-rose-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-[10px] text-slate-400 uppercase tracking-wider mb-1 block">Stock disponible</label>
-                  <input
-                    type="number"
-                    value={formData.stock || ''}
-                    onChange={e => setFormData({...formData, stock: Number(e.target.value)})}
-                    placeholder="10"
-                    className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-rose-500"
-                  />
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[10px] text-slate-400 uppercase tracking-wider mb-1 block">Precio Venta (CLP)</label>
+                    <input type="number" value={formData.precioVenta || ''} onChange={e => setFormData({ ...formData, precioVenta: Number(e.target.value) })} placeholder="450000" className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-rose-500" />
+                  </div>
+                  <div>
+                    <label className="text-[10px] text-slate-400 uppercase tracking-wider mb-1 block">Stock</label>
+                    <input type="number" value={formData.stock || ''} onChange={e => setFormData({ ...formData, stock: Number(e.target.value) })} placeholder="10" className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-rose-500" />
+                  </div>
                 </div>
               </div>
-
-              <button
-                onClick={saveProduct}
-                disabled={!formData.nombre || !formData.categoria}
-                className="w-full py-3 bg-gradient-to-r from-emerald-500 to-emerald-400 text-slate-950 font-bold rounded-xl text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <Check size={16} className="inline mr-2" />
-                {editingProduct ? 'Guardar Cambios' : 'Crear Producto'}
+              <button onClick={saveProduct} disabled={!formData.nombre || !formData.categoria} className="w-full py-3 bg-gradient-to-r from-emerald-500 to-emerald-400 text-slate-950 font-bold rounded-xl text-sm disabled:opacity-50">
+                <Check size={16} className="inline mr-2" />{editingProduct ? 'Guardar Cambios' : 'Crear Producto'}
               </button>
             </div>
           </div>
@@ -1445,28 +1238,17 @@ function CartModal({ cart, setCart, onClose }: any) {
     return sum + Math.round(price);
   }, 0);
 
-  const removeFromCart = (id: number) => {
-    setCart(cart.filter((item: any) => item.id !== id));
-  };
-
   const sendWhatsApp = () => {
-    let msg = `🤿 *COTIZACIÓN GERDIVER CHILE*\n`;
-    msg += `━━━━━━━━━━━━━━━━━━\n\n`;
+    let msg = `🤿 *COTIZACIÓN GERDIVER CHILE*\n━━━━━━━━━━━━━━━━━━\n\n`;
     cart.forEach((item: any, i: number) => {
       const price = item.product.precioVenta * item.quantity;
       const finalPrice = item.plan ? price * (1 - item.plan.descuento / 100) : price;
-      msg += `${i + 1}. *${item.product.nombre}*\n`;
-      msg += `   Cantidad: ${item.quantity}\n`;
+      msg += `${i + 1}. *${item.product.nombre}*\n   Cantidad: ${item.quantity}\n`;
       if (item.plan) msg += `   Plan: ${item.plan.nombre} (-${item.plan.descuento}%)\n`;
       msg += `   Subtotal: ${formatCLP(Math.round(finalPrice))}\n\n`;
     });
-    msg += `━━━━━━━━━━━━━━━━━━\n`;
-    msg += `💵 *TOTAL: ${formatCLP(total)} CLP*\n\n`;
-    msg += `📍 Puerto Montt, Chile\n`;
-    msg += `📞 +569 8889 2747`;
-
-    const encoded = encodeURIComponent(msg);
-    window.open(`https://wa.me/56988892747?text=${encoded}`, '_blank');
+    msg += `━━━━━━━━━━━━━━━━━━\n💵 *TOTAL: ${formatCLP(total)} CLP*\n\n📍 Puerto Montt, Chile\n📞 +569 8889 2747`;
+    window.open(`https://wa.me/56988892747?text=${encodeURIComponent(msg)}`, '_blank');
   };
 
   return (
@@ -1474,19 +1256,11 @@ function CartModal({ cart, setCart, onClose }: any) {
       <div className="w-full max-w-[390px] bg-slate-900 rounded-t-3xl border-t border-slate-700 max-h-[85vh] overflow-y-auto">
         <div className="p-4 space-y-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <ShoppingCart size={18} className="text-cyan-400" />
-              <h3 className="text-base font-bold text-white">Cotización</h3>
-            </div>
+            <div className="flex items-center gap-2"><ShoppingCart size={18} className="text-cyan-400" /><h3 className="text-base font-bold text-white">Cotización</h3></div>
             <button onClick={onClose} className="p-1 rounded-lg bg-slate-800"><X size={16} className="text-slate-400" /></button>
           </div>
-
           {cart.length === 0 ? (
-            <div className="text-center py-8">
-              <ShoppingCart size={40} className="text-slate-700 mx-auto mb-3" />
-              <p className="text-sm text-slate-500">Carrito vacío</p>
-              <p className="text-xs text-slate-600">Agrega productos desde el catálogo</p>
-            </div>
+            <div className="text-center py-8"><ShoppingCart size={40} className="text-slate-700 mx-auto mb-3" /><p className="text-sm text-slate-500">Carrito vacío</p></div>
           ) : (
             <>
               <div className="space-y-2">
@@ -1497,13 +1271,7 @@ function CartModal({ cart, setCart, onClose }: any) {
                     <div key={item.id} className="bg-slate-800/50 rounded-xl p-3 border border-slate-700">
                       <div className="flex items-start justify-between">
                         <div className="flex items-center gap-2">
-                          <div className="w-10 h-10 rounded-lg bg-slate-900 overflow-hidden flex-shrink-0 flex items-center justify-center">
-                            {item.product.imagen && item.product.imagen.startsWith('http') ? (
-                              <img src={item.product.imagen} alt={item.product.nombre} className="w-full h-full object-cover" />
-                            ) : (
-                              <span className="text-lg">{item.product.imagen || '📦'}</span>
-                            )}
-                          </div>
+                          <div className="w-10 h-10 rounded-lg bg-slate-900 flex items-center justify-center text-lg">{item.product.imagen}</div>
                           <div>
                             <p className="text-xs font-semibold text-white">{item.product.nombre}</p>
                             <p className="text-[10px] text-slate-400">💰 Compra • Cant: {item.quantity}</p>
@@ -1512,26 +1280,22 @@ function CartModal({ cart, setCart, onClose }: any) {
                         </div>
                         <div className="text-right">
                           <p className="text-xs font-bold text-emerald-400">{formatCLP(Math.round(finalPrice))}</p>
-                          <button onClick={() => removeFromCart(item.id)} className="text-[10px] text-rose-400 mt-1">Eliminar</button>
+                          <button onClick={() => setCart(cart.filter((i: any) => i.id !== item.id))} className="text-[10px] text-rose-400 mt-1">Eliminar</button>
                         </div>
                       </div>
                     </div>
                   );
                 })}
               </div>
-
               <div className="bg-slate-800 rounded-xl p-4 border border-slate-700">
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-slate-400">Total</span>
                   <span className="text-xl font-bold text-emerald-400">{formatCLP(total)} CLP</span>
                 </div>
               </div>
-
-              <button onClick={sendWhatsApp} className="w-full py-3.5 bg-gradient-to-r from-emerald-500 to-emerald-400 text-slate-950 font-bold rounded-xl text-sm flex items-center justify-center gap-2 hover:opacity-90 transition-opacity">
-                <MessageCircle size={18} />
-                Enviar Cotización por WhatsApp
+              <button onClick={sendWhatsApp} className="w-full py-3.5 bg-gradient-to-r from-emerald-500 to-emerald-400 text-slate-950 font-bold rounded-xl text-sm flex items-center justify-center gap-2">
+                <MessageCircle size={18} />Enviar por WhatsApp
               </button>
-              <p className="text-center text-[10px] text-slate-500">Se enviará a +569 8889 2747</p>
             </>
           )}
         </div>
