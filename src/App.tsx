@@ -276,6 +276,58 @@ function InicioModule({ setActive }: any) {
           <p className="text-sm text-slate-400">Puerto Montt, Chile</p>
         </div>
       </div>
+
+      {/* Información de Horarios de Agendamiento */}
+      <div className="bg-gradient-to-br from-amber-500/10 to-rose-500/10 rounded-2xl p-4 border border-amber-500/30">
+        <div className="flex items-center gap-2 mb-3">
+          <Calendar size={18} className="text-amber-400" />
+          <h3 className="text-sm font-bold text-white">Horarios de Agendamiento</h3>
+        </div>
+        
+        <div className="space-y-3">
+          <div className="bg-slate-900/50 rounded-xl p-3 border border-emerald-500/20">
+            <div className="flex items-start gap-2">
+              <div className="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
+                <span className="text-sm">🌅</span>
+              </div>
+              <div className="flex-1">
+                <p className="text-xs font-semibold text-emerald-400 mb-1">9:00 AM - 12:00 PM</p>
+                <p className="text-[11px] text-slate-300">Los cilindros se llevan a planta <strong className="text-emerald-400">el mismo día</strong> del agendamiento</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-slate-900/50 rounded-xl p-3 border border-amber-500/20">
+            <div className="flex items-start gap-2">
+              <div className="w-8 h-8 rounded-lg bg-amber-500/20 flex items-center justify-center flex-shrink-0">
+                <span className="text-sm">🌙</span>
+              </div>
+              <div className="flex-1">
+                <p className="text-xs font-semibold text-amber-400 mb-1">Después de las 12:00 PM</p>
+                <p className="text-[11px] text-slate-300">Los cilindros se llevan a planta <strong className="text-amber-400">al día siguiente</strong> del agendamiento</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-slate-900/50 rounded-xl p-3 border border-cyan-500/20">
+            <div className="flex items-start gap-2">
+              <div className="w-8 h-8 rounded-lg bg-cyan-500/20 flex items-center justify-center flex-shrink-0">
+                <span className="text-sm">📦</span>
+              </div>
+              <div className="flex-1">
+                <p className="text-xs font-semibold text-cyan-400 mb-1">Tiempo de Entrega</p>
+                <p className="text-[11px] text-slate-300">La entrega se realiza <strong className="text-cyan-400">2 días después</strong> del ingreso a planta</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-3 bg-rose-500/10 border border-rose-500/20 rounded-lg p-2">
+          <p className="text-[10px] text-rose-300 text-center">
+            ⚠️ Ejemplo: Si agenda a las 10 AM del lunes → ingresa a planta el lunes → entrega el miércoles
+          </p>
+        </div>
+      </div>
       <div className="grid grid-cols-2 gap-3">
         <QuickCard icon={CloudRain} title="Clima & Mareas" subtitle="SHOA / DIRECTEMAR" color="cyan" onClick={() => setActive('clima')} />
         <QuickCard icon={Gauge} title="Conversor KT" subtitle="Nudos & Brújula" color="emerald" onClick={() => setActive('convertidor')} />
