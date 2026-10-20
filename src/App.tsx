@@ -4,7 +4,7 @@ import {
   ShoppingCart, Package, Search, MapPin, AlertTriangle, CheckCircle, XCircle,
   Phone, MessageCircle, Settings, Plus, Trash2, Edit, Lock, Unlock,
   Smartphone, Monitor, Droplets, Ship, Zap, Activity, Navigation,
-  Percent, X, Check, Home, Wrench, Bell, ChevronRight, Camera, Upload, Image as ImageIcon
+  Percent, X, Check, Home, Wrench, Bell, ChevronRight, Camera, Upload, Image as ImageIcon, Calendar
 } from 'lucide-react';
 
 // ==================== DATA ====================
@@ -85,7 +85,7 @@ export default function App() {
     { id: 'clima', nombre: 'Clima', icon: CloudRain },
     { id: 'convertidor', nombre: 'Conversor', icon: Gauge },
     { id: 'catalogo', nombre: 'Catálogo', icon: Package },
-    { id: 'taller', nombre: 'Taller', icon: Wrench },
+    { id: 'taller', nombre: 'Agendamiento', icon: Calendar },
     { id: 'admin', nombre: 'Admin', icon: Settings },
   ];
 
@@ -153,7 +153,7 @@ function SplashScreen({ viewMode, setViewMode, onEnter }: any) {
           <div className="h-px w-12 bg-gradient-to-l from-transparent to-cyan-400" />
         </div>
         <p className="text-slate-400 text-sm mb-2">Buceo Comercial & Servicios Marítimos</p>
-        <p className="text-slate-500 text-xs mb-8">Puerto Montt • Servicios de inmersión, acuícola-salmonero y taller especializado</p>
+        <p className="text-slate-500 text-xs mb-8">Puerto Montt • Servicios de inmersión, acuícola-salmonero y carga de oxígeno</p>
         <button onClick={handleEnter} disabled={isLoading} className="group relative w-full max-w-xs mx-auto">
           <div className="absolute inset-0 bg-gradient-to-r from-cyan-400 to-emerald-400 rounded-2xl blur-lg opacity-50 group-hover:opacity-75 transition-opacity" />
           <div className="relative flex items-center justify-center gap-3 px-8 py-4 bg-gradient-to-r from-cyan-400 to-emerald-400 text-slate-950 font-bold rounded-2xl text-lg shadow-xl group-hover:scale-105 transition-all">
@@ -280,7 +280,7 @@ function InicioModule({ setActive }: any) {
         <QuickCard icon={CloudRain} title="Clima & Mareas" subtitle="SHOA / DIRECTEMAR" color="cyan" onClick={() => setActive('clima')} />
         <QuickCard icon={Gauge} title="Conversor KT" subtitle="Nudos & Brújula" color="emerald" onClick={() => setActive('convertidor')} />
         <QuickCard icon={Package} title="Catálogo" subtitle="Equipos de Buceo" color="amber" onClick={() => setActive('catalogo')} />
-        <QuickCard icon={Wrench} title="Taller" subtitle="Prueba Hidrostática" color="rose" onClick={() => setActive('taller')} />
+        <QuickCard icon={Calendar} title="Agendamiento" subtitle="Carga de Oxígeno" color="rose" onClick={() => setActive('taller')} />
       </div>
       <div className="bg-slate-800/50 rounded-2xl p-4 border border-slate-700">
         <div className="flex items-center gap-2 mb-3">
@@ -915,13 +915,13 @@ function TallerModule() {
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
           <Wrench size={20} className="text-rose-400" />
-          <h2 className="text-lg font-bold text-white">Taller</h2>
+          <h2 className="text-lg font-bold text-white">Agendamiento</h2>
         </div>
         <button onClick={() => { setShowForm(true); setEditingOrden(null); setFormData({ numeroSerie: '', pruebaAerostatica: '', anioFabricacion: '', foto: null, cliente: '', telefono: '' }); }} className="px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/30 rounded-lg text-emerald-400 text-[11px] font-semibold">
           <Plus size={12} className="inline mr-1" />Nueva
         </button>
       </div>
-      <p className="text-xs text-slate-400 -mt-2">Planilla de Prueba Hidrostática de Cilindros</p>
+      <p className="text-xs text-slate-400 -mt-2">Agendamiento de Hora para Carga de Oxígeno</p>
 
       <div className="relative">
         <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
@@ -1126,7 +1126,7 @@ function TallerModule() {
               {!editingOrden && (
                 <div className="bg-cyan-500/10 border border-cyan-500/30 rounded-xl p-3 flex items-start gap-2">
                   <MessageCircle size={14} className="text-cyan-400 mt-0.5 shrink-0" />
-                  <p className="text-[10px] text-cyan-300">Al crear la orden, se enviará automáticamente la planilla por WhatsApp al taller.</p>
+                  <p className="text-[10px] text-cyan-300">Al crear la orden, se enviará automáticamente la planilla por WhatsApp para agendar la carga de oxígeno.</p>
                 </div>
               )}
 
