@@ -62,7 +62,9 @@ export default function App() {
   const [cart, setCart] = useState<any[]>([]);
   const [products, setProducts] = useState(INITIAL_PRODUCTS);
   const [showCart, setShowCart] = useState(false);
-  const [showSplash, setShowSplash] = useState(true);
+  const [showLogin, setShowLogin] = useState(true);
+  const [showSplash, setShowSplash] = useState(false);
+  const [clientData, setClientData] = useState<any>(null);
 
   const modules = [
     { id: 'inicio', nombre: 'Inicio', icon: Home },
@@ -72,6 +74,10 @@ export default function App() {
     { id: 'taller', nombre: 'Agendamiento', icon: Calendar },
     { id: 'admin', nombre: 'Admin', icon: Settings },
   ];
+
+  if (showLogin) {
+    return <LoginScreen viewMode={viewMode} setViewMode={setViewMode} onLogin={(data: any) => { setClientData(data); setShowLogin(false); setShowSplash(true); }} />;
+  }
 
   if (showSplash) {
     return <SplashScreen viewMode={viewMode} setViewMode={setViewMode} onEnter={() => setShowSplash(false)} />;
@@ -85,7 +91,7 @@ export default function App() {
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-slate-950 rounded-b-2xl z-50" />
             <Header viewMode={viewMode} setViewMode={setViewMode} cartCount={cart.length} onCartClick={() => setShowCart(true)} />
             <div className="flex-1 overflow-y-auto pb-20 scrollbar-hide">
-              <ModuleRenderer module={activeModule} cart={cart} setCart={setCart} setActive={setActiveModule} products={products} setProducts={setProducts} />
+              <ModuleRenderer module={activeModule} cart={cart} setCart={setCart} setActive={setActiveModule} products={products} setProducts={setProducts} clientData={clientData} />
             </div>
             <BottomNav active={activeModule} setActive={setActiveModule} modules={modules} />
           </div>
@@ -94,11 +100,137 @@ export default function App() {
         <div className="flex min-h-screen">
           <DesktopSidebar active={activeModule} setActive={setActiveModule} modules={modules} viewMode={viewMode} setViewMode={setViewMode} cartCount={cart.length} onCartClick={() => setShowCart(true)} />
           <div className="flex-1 overflow-y-auto bg-slate-950">
-            <ModuleRenderer module={activeModule} cart={cart} setCart={setCart} setActive={setActiveModule} products={products} setProducts={setProducts} />
+            <ModuleRenderer module={activeModule} cart={cart} setCart={setCart} setActive={setActiveModule} products={products} setProducts={setProducts} clientData={clientData} />
           </div>
         </div>
       )}
-      {showCart && <CartModal cart={cart} setCart={setCart} onClose={() => setShowCart(false)} />}
+      {showCart && <CartModal cart={cart} setCart={setCart} onClose={() => setShowCart(false)} clientData={clientData} />}
+    </div>
+  );
+}
+
+// ==================== LOGIN SCREEN ====================
+function LoginScreen({ viewMode, setViewMode, onLogin }: any) {
+  const [formData, setFormData] = useState({
+    nombreEmpresa: '',
+    nombreCliente: '',
+    rutEmpresa: '',
+    telefono: ''
+  });
+  const [errors, setErrors] = useState<any>({});
+
+  const validateForm = () => {
+    const newErrors: any = {};
+    if (!formData.nombreEmpresa.trim()) newErrors.nombreEmpresa = 'Nombre de empresa requerido';
+    if (!formData.nombreCliente.trim()) newErrors.nombreCliente = 'Nombre de cliente requerido';
+    if (!formData.rutEmpresa.trim()) newErrors.rutEmpresa = 'RUT requerido';
+    if (!formData.telefono.trim()) newErrors.telefono = 'Teléfono requerido';
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = () => {
+    if (validateForm()) {
+      onLogin(formData);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-950 font-[Inter] text-white relative overflow-hidden flex items-center justify-center">
+      <div className="absolute inset-0">
+        <div className="absolute inset-0 bg-gradient-to-b from-cyan-950/20 via-slate-950 to-slate-950" />
+        <div className="absolute top-0 left-0 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-0 right-0 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+      </div>
+
+      <div className="absolute top-6 right-6 z-50">
+        <button onClick={() => setViewMode(viewMode === 'mobile' ? 'desktop' : 'mobile')} className="flex items-center gap-2 px-4 py-2 bg-slate-800/80 backdrop-blur-sm border border-slate-700 rounded-full hover:bg-slate-700/80 transition-all">
+          {viewMode === 'mobile' ? <Monitor size={16} className="text-cyan-400" /> : <Smartphone size={16} className="text-cyan-400" />}
+          <span className="text-xs text-slate-300">{viewMode === 'mobile' ? 'Escritorio' : 'Móvil'}</span>
+        </button>
+      </div>
+
+      <div className="relative z-10 w-full max-w-md px-6">
+        <div className="text-center mb-8">
+          <div className="relative inline-block mb-4">
+            <div className="absolute inset-0 bg-gradient-to-br from-cyan-400 to-emerald-400 rounded-3xl blur-2xl opacity-30 animate-pulse" />
+            <div className="relative w-24 h-24 mx-auto bg-gradient-to-br from-cyan-400 via-cyan-500 to-emerald-400 rounded-3xl flex items-center justify-center shadow-2xl shadow-cyan-500/50">
+              <Anchor size={48} className="text-slate-950" strokeWidth={2.5} />
+            </div>
+          </div>
+          <h1 className="text-4xl font-black mb-2 bg-gradient-to-r from-cyan-400 via-emerald-400 to-cyan-400 bg-clip-text text-transparent">GERDIVER</h1>
+          <p className="text-sm text-slate-400">Buceo Comercial & Servicios Marítimos</p>
+        </div>
+
+        <div className="bg-slate-900/80 backdrop-blur-xl rounded-2xl p-6 border border-slate-700 shadow-2xl">
+          <h2 className="text-lg font-bold text-white mb-1">Registro de Cliente</h2>
+          <p className="text-xs text-slate-400 mb-6">Ingrese los datos de su empresa para continuar</p>
+
+          <div className="space-y-4">
+            <div>
+              <label className="text-[10px] text-slate-400 uppercase tracking-wider mb-1 block">Nombre de la Empresa *</label>
+              <input
+                type="text"
+                value={formData.nombreEmpresa}
+                onChange={e => setFormData({ ...formData, nombreEmpresa: e.target.value })}
+                placeholder="Ej: Salmones Austral S.A."
+                className={`w-full px-3 py-2.5 bg-slate-800 border ${errors.nombreEmpresa ? 'border-rose-500' : 'border-slate-700'} rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500`}
+              />
+              {errors.nombreEmpresa && <p className="text-[10px] text-rose-400 mt-1">{errors.nombreEmpresa}</p>}
+            </div>
+
+            <div>
+              <label className="text-[10px] text-slate-400 uppercase tracking-wider mb-1 block">Nombre del Cliente *</label>
+              <input
+                type="text"
+                value={formData.nombreCliente}
+                onChange={e => setFormData({ ...formData, nombreCliente: e.target.value })}
+                placeholder="Ej: Juan Pérez González"
+                className={`w-full px-3 py-2.5 bg-slate-800 border ${errors.nombreCliente ? 'border-rose-500' : 'border-slate-700'} rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500`}
+              />
+              {errors.nombreCliente && <p className="text-[10px] text-rose-400 mt-1">{errors.nombreCliente}</p>}
+            </div>
+
+            <div>
+              <label className="text-[10px] text-slate-400 uppercase tracking-wider mb-1 block">RUT de la Empresa *</label>
+              <input
+                type="text"
+                value={formData.rutEmpresa}
+                onChange={e => setFormData({ ...formData, rutEmpresa: e.target.value })}
+                placeholder="Ej: 12.345.678-9"
+                className={`w-full px-3 py-2.5 bg-slate-800 border ${errors.rutEmpresa ? 'border-rose-500' : 'border-slate-700'} rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500`}
+              />
+              {errors.rutEmpresa && <p className="text-[10px] text-rose-400 mt-1">{errors.rutEmpresa}</p>}
+            </div>
+
+            <div>
+              <label className="text-[10px] text-slate-400 uppercase tracking-wider mb-1 block">Número de Teléfono *</label>
+              <input
+                type="tel"
+                value={formData.telefono}
+                onChange={e => setFormData({ ...formData, telefono: e.target.value })}
+                placeholder="Ej: +56 9 1234 5678"
+                className={`w-full px-3 py-2.5 bg-slate-800 border ${errors.telefono ? 'border-rose-500' : 'border-slate-700'} rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500`}
+              />
+              {errors.telefono && <p className="text-[10px] text-rose-400 mt-1">{errors.telefono}</p>}
+            </div>
+          </div>
+
+          <button
+            onClick={handleSubmit}
+            className="w-full mt-6 py-3 bg-gradient-to-r from-cyan-400 to-emerald-400 text-slate-950 font-bold rounded-xl text-sm hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+          >
+            <Check size={16} />
+            Ingresar a la Aplicación
+          </button>
+        </div>
+
+        <div className="mt-6 text-center">
+          <p className="text-[10px] text-slate-500">
+            Al continuar, aceptas nuestros términos y condiciones
+          </p>
+        </div>
+      </div>
     </div>
   );
 }
@@ -233,12 +365,12 @@ function BottomNav({ active, setActive, modules }: any) {
 }
 
 // ==================== MODULE RENDERER ====================
-function ModuleRenderer({ module, cart, setCart, setActive, products, setProducts }: any) {
+function ModuleRenderer({ module, cart, setCart, setActive, products, setProducts, clientData }: any) {
   switch (module) {
     case 'inicio': return <InicioModule setActive={setActive} />;
     case 'clima': return <ClimaModule />;
     case 'convertidor': return <ConversorModule />;
-    case 'catalogo': return <CatalogoModule cart={cart} setCart={setCart} products={products} />;
+    case 'catalogo': return <CatalogoModule cart={cart} setCart={setCart} products={products} clientData={clientData} />;
     case 'taller': return <TallerModule />;
     case 'admin': return <AdminModule products={products} setProducts={setProducts} />;
     default: return <InicioModule setActive={setActive} />;
@@ -1211,7 +1343,7 @@ function ConversorModule() {
 }
 
 // ==================== CATALOGO MODULE ====================
-function CatalogoModule({ cart, setCart, products }: any) {
+function CatalogoModule({ cart, setCart, products, clientData }: any) {
   const [search, setSearch] = useState('');
   const [catFilter, setCatFilter] = useState('Todos');
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
@@ -1843,13 +1975,13 @@ function AdminModule({ products, setProducts }: any) {
 }
 
 // ==================== CART MODAL ====================
-function CartModal({ cart, setCart, onClose }: any) {
+function CartModal({ cart, setCart, onClose, clientData }: any) {
   const WHATSAPP_NUMBER = '56997756020';
   const [orderConfirmed, setOrderConfirmed] = useState(false);
   const [orderNumber, setOrderNumber] = useState('');
   const [showClientForm, setShowClientForm] = useState(false);
-  const [clientName, setClientName] = useState('');
-  const [clientPhone, setClientPhone] = useState('');
+  const [clientName, setClientName] = useState(clientData?.nombreCliente || '');
+  const [clientPhone, setClientPhone] = useState(clientData?.telefono || '');
 
   const total = cart.reduce((sum: number, item: any) => {
     const price = item.product.precioVenta * item.quantity;
@@ -1878,6 +2010,8 @@ function CartModal({ cart, setCart, onClose }: any) {
     msg += `⏰ *Hora:* ${new Date().toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}\n\n`;
     
     msg += `*DATOS DEL CLIENTE:*\n`;
+    msg += `🏢 *Empresa:* ${clientData?.nombreEmpresa || 'No indicada'}\n`;
+    msg += `🆔 *RUT:* ${clientData?.rutEmpresa || 'No indicado'}\n`;
     msg += `👤 *Nombre:* ${clientName}\n`;
     msg += `📞 *Teléfono:* ${clientPhone}\n\n`;
     
