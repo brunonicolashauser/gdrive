@@ -345,6 +345,28 @@ function InicioModule({ setActive }: any) {
           <AlertItem severity="info" text="Puerto Montt: Condiciones óptimas" />
         </div>
       </div>
+
+      {/* Información de Contacto */}
+      <div className="bg-gradient-to-br from-cyan-500/10 to-emerald-500/10 rounded-2xl p-4 border border-cyan-500/30">
+        <div className="flex items-center gap-2 mb-3">
+          <Phone size={18} className="text-cyan-400" />
+          <h3 className="text-sm font-bold text-white">¿Tienes Consultas o Dudas?</h3>
+        </div>
+        <div className="bg-slate-900/50 rounded-xl p-3 border border-cyan-500/20">
+          <p className="text-xs text-slate-300 mb-2">
+            Para cualquier consulta o duda, comunícate directamente con nosotros:
+          </p>
+          <div className="flex items-center justify-center gap-2 mt-3">
+            <MessageCircle size={16} className="text-emerald-400" />
+            <a href="https://wa.me/56997756020" target="_blank" rel="noopener noreferrer" className="text-sm font-bold text-emerald-400 hover:text-emerald-300 transition-colors">
+              +56 9 9775 6020
+            </a>
+          </div>
+          <p className="text-[10px] text-slate-400 text-center mt-2">
+            Disponible por WhatsApp para atención personalizada
+          </p>
+        </div>
+      </div>
     </div>
   );
 }
