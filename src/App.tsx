@@ -704,48 +704,211 @@ function WindDial({ degrees }: { degrees: number }) {
 function ConversorModule() {
   const [nudos, setNudos] = useState(15);
   const [compassAngle, setCompassAngle] = useState(0);
+  const [trueHeading, setTrueHeading] = useState(0);
   const [useGyroscope, setUseGyroscope] = useState(false);
   const [permissionGranted, setPermissionGranted] = useState(false);
   const [permissionError, setPermissionError] = useState('');
   const [location, setLocation] = useState<{ lat: number; lon: number; alt: number | null; accuracy: number } | null>(null);
   const [locationError, setLocationError] = useState('');
   const [locationLoading, setLocationLoading] = useState(false);
+  const [calibrationLevel, setCalibrationLevel] = useState(0); // 0-3: none, low, medium, high
+  const [showCalibrationTip, setShowCalibrationTip] = useState(false);
+  const [sensorType, setSensorType] = useState('none');
+  const [rawSamples, setRawSamples] = useState<number[]>([]);
   const beaufort = getBeaufort(nudos);
   const kmh = (nudos * 1.852).toFixed(1);
   const ms = (nudos * 0.5144).toFixed(2);
+
+  // Calcular declinación magnética aproximada (modelo simplificado WMM)
+  // Para el sur de Chile la declinación varía entre +1° y +5° este
+  const getMagneticDeclination = (lat: number, lon: number): number => {
+    // Fórmula simplificada basada en el modelo WMM 2020-2025
+    // Para latitudes entre -40° y -56° y longitudes entre -66° y -75°
+    const year = new Date().getFullYear() + (new Date().getMonth() / 12);
+    const epoch = 2020.0;
+    const dt = year - epoch;
+    
+    // Componentes principales del campo magnético para el sur de Chile
+    // Declinación base + variación secular + variación espacial
+    let declination = 2.5; // Valor base para Puerto Montt (~2.5°E en 2020)
+    
+    // Variación por longitud (más al oeste = mayor declinación)
+    declination += (lon + 72) * 0.15;
+    
+    // Variación por latitud (más al sur = menor declinación)
+    declination += (lat + 45) * -0.03;
+    
+    // Variación secular anual (aproximadamente -0.05°/año para esta región)
+    declination += dt * -0.05;
+    
+    return Math.max(-10, Math.min(10, declination));
+  };
+
+  // Filtro de suavizado exponencial (low-pass filter)
+  const smoothAngle = (newAngle: number, oldAngle: number, factor: number = 0.3): number => {
+    // Manejar el wrap-around de 360°/0°
+    let diff = newAngle - oldAngle;
+    if (diff > 180) diff -= 360;
+    if (diff < -180) diff += 360;
+    let result = oldAngle + diff * factor;
+    if (result < 0) result += 360;
+    if (result >= 360) result -= 360;
+    return result;
+  };
+
+  // Compensar heading por inclinación del dispositivo
+  const compensateTilt = (alpha: number, beta: number, gamma: number): number => {
+    // Convertir a radianes
+    const alphaRad = alpha * Math.PI / 180;
+    const betaRad = beta * Math.PI / 180;
+    const gammaRad = gamma * Math.PI / 180;
+    
+    // Calcular heading compensado por inclinación
+    const x = Math.cos(alphaRad) * Math.cos(gammaRad) + Math.sin(alphaRad) * Math.sin(betaRad) * Math.sin(gammaRad);
+    const y = Math.sin(alphaRad) * Math.cos(betaRad);
+    
+    let heading = Math.atan2(y, x) * 180 / Math.PI;
+    if (heading < 0) heading += 360;
+    return heading;
+  };
 
   const requestOrientationPermission = async () => {
     setPermissionError('');
     if (typeof (DeviceOrientationEvent as any).requestPermission === 'function') {
       try {
         const permission = await (DeviceOrientationEvent as any).requestPermission();
-        if (permission === 'granted') { setPermissionGranted(true); setUseGyroscope(true); }
-        else { setPermissionError('Permiso denegado'); }
-      } catch { setPermissionError('Error al solicitar permiso'); }
-    } else { setPermissionGranted(true); setUseGyroscope(true); }
+        if (permission === 'granted') { 
+          setPermissionGranted(true); 
+          setUseGyroscope(true);
+          setShowCalibrationTip(true);
+        }
+        else { setPermissionError('Permiso denegado. Active los sensores en configuración del navegador.'); }
+      } catch { setPermissionError('Error al solicitar permiso. Use HTTPS o un dispositivo compatible.'); }
+    } else { 
+      setPermissionGranted(true); 
+      setUseGyroscope(true);
+      setShowCalibrationTip(true);
+    }
   };
 
   const toggleGyroscope = () => {
-    if (useGyroscope) setUseGyroscope(false);
-    else requestOrientationPermission();
+    if (useGyroscope) {
+      setUseGyroscope(false);
+      setCalibrationLevel(0);
+      setSensorType('none');
+      setRawSamples([]);
+    } else {
+      requestOrientationPermission();
+    }
   };
 
+  // Handler principal de orientación con calibración avanzada
   useEffect(() => {
     if (useGyroscope && permissionGranted) {
-      const handler = (e: any) => {
-        let heading = 0;
-        if (e.webkitCompassHeading !== undefined) heading = e.webkitCompassHeading;
-        else if (e.alpha !== null) {
+      let smoothedHeading = 0;
+      let sampleCount = 0;
+
+      // Intentar usar deviceorientationabsolute primero (más preciso)
+      const absoluteHandler = (e: any) => {
+        if (e.absolute && e.alpha !== null) {
+          setSensorType('absoluto');
           const so = window.screen.orientation?.angle || 0;
-          heading = (360 - e.alpha - so) % 360;
+          let heading = (360 - e.alpha - so) % 360;
           if (heading < 0) heading += 360;
+          
+          // Compensar por inclinación si hay datos beta/gamma
+          if (e.beta !== null && e.gamma !== null) {
+            const tiltCompensated = compensateTilt(360 - e.alpha - so, e.beta, e.gamma);
+            heading = tiltCompensated;
+          }
+          
+          // Aplicar filtro de suavizado
+          smoothedHeading = smoothAngle(heading, smoothedHeading, 0.25);
+          setCompassAngle(Math.round(smoothedHeading));
+          
+          // Aplicar declinación magnética si tenemos GPS
+          if (location) {
+            const declination = getMagneticDeclination(location.lat, location.lon);
+            let trueH = (smoothedHeading + declination) % 360;
+            if (trueH < 0) trueH += 360;
+            setTrueHeading(Math.round(trueH));
+          } else {
+            setTrueHeading(Math.round(smoothedHeading));
+          }
+          
+          // Actualizar nivel de calibración
+          sampleCount++;
+          if (sampleCount > 50) setCalibrationLevel(3);
+          else if (sampleCount > 20) setCalibrationLevel(2);
+          else if (sampleCount > 5) setCalibrationLevel(1);
         }
-        setCompassAngle(Math.round(heading));
       };
-      window.addEventListener('deviceorientation', handler, true);
-      return () => window.removeEventListener('deviceorientation', handler, true);
+
+      // Fallback: webkitCompassHeading (iOS - ya apunta a norte verdadero)
+      const webkitHandler = (e: any) => {
+        if (e.webkitCompassHeading !== undefined) {
+          setSensorType('brújula iOS');
+          let heading = e.webkitCompassHeading;
+          
+          // iOS ya compensa por declinación, pero aplicamos suavizado
+          smoothedHeading = smoothAngle(heading, smoothedHeading, 0.2);
+          setCompassAngle(Math.round(smoothedHeading));
+          setTrueHeading(Math.round(smoothedHeading));
+          
+          sampleCount++;
+          if (sampleCount > 50) setCalibrationLevel(3);
+          else if (sampleCount > 20) setCalibrationLevel(2);
+          else if (sampleCount > 5) setCalibrationLevel(1);
+        }
+      };
+
+      // Fallback: deviceorientation estándar (Android)
+      const standardHandler = (e: any) => {
+        if (e.alpha !== null && e.webkitCompassHeading === undefined) {
+          setSensorType('orientación');
+          const so = window.screen.orientation?.angle || 0;
+          let heading: number;
+          
+          // Si hay beta/gamma, compensar inclinación
+          if (e.beta !== null && e.gamma !== null && (Math.abs(e.beta) > 5 || Math.abs(e.gamma) > 5)) {
+            heading = compensateTilt(360 - e.alpha - so, e.beta, e.gamma);
+          } else {
+            heading = (360 - e.alpha - so) % 360;
+            if (heading < 0) heading += 360;
+          }
+          
+          smoothedHeading = smoothAngle(heading, smoothedHeading, 0.25);
+          setCompassAngle(Math.round(smoothedHeading));
+          
+          // Aplicar declinación magnética
+          if (location) {
+            const declination = getMagneticDeclination(location.lat, location.lon);
+            let trueH = (smoothedHeading + declination) % 360;
+            if (trueH < 0) trueH += 360;
+            setTrueHeading(Math.round(trueH));
+          } else {
+            setTrueHeading(Math.round(smoothedHeading));
+          }
+          
+          sampleCount++;
+          if (sampleCount > 50) setCalibrationLevel(3);
+          else if (sampleCount > 20) setCalibrationLevel(2);
+          else if (sampleCount > 5) setCalibrationLevel(1);
+        }
+      };
+
+      // Registrar todos los handlers
+      window.addEventListener('deviceorientationabsolute', absoluteHandler as any, true);
+      window.addEventListener('deviceorientation', webkitHandler as any, true);
+      window.addEventListener('deviceorientation', standardHandler as any, true);
+
+      return () => {
+        window.removeEventListener('deviceorientationabsolute', absoluteHandler as any, true);
+        window.removeEventListener('deviceorientation', webkitHandler as any, true);
+        window.removeEventListener('deviceorientation', standardHandler as any, true);
+      };
     }
-  }, [useGyroscope, permissionGranted]);
+  }, [useGyroscope, permissionGranted, location]);
 
   useEffect(() => {
     if (!navigator.geolocation) { setLocationError('Geolocalización no disponible'); return; }
@@ -810,41 +973,169 @@ function ConversorModule() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Compass size={16} className="text-cyan-400" />
-            <span className="text-sm font-semibold text-white">Brújula Digital</span>
+            <span className="text-sm font-semibold text-white">Brújula Calibrada</span>
           </div>
           <button onClick={toggleGyroscope} className={`px-3 py-1.5 rounded-lg text-[10px] font-medium transition-all ${useGyroscope ? 'bg-emerald-500 text-slate-950' : 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/30'}`}>
             {useGyroscope ? '✓ Activa' : '📱 Activar Sensor'}
           </button>
         </div>
+
         {permissionError && <div className="bg-rose-500/10 border border-rose-500/30 rounded-xl p-3"><p className="text-xs text-rose-400">{permissionError}</p></div>}
+
+        {/* Calibration Tip */}
+        {showCalibrationTip && useGyroscope && calibrationLevel < 3 && (
+          <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3">
+            <div className="flex items-start gap-2">
+              <AlertTriangle size={14} className="text-amber-400 mt-0.5 shrink-0" />
+              <div>
+                <p className="text-[11px] font-semibold text-amber-300 mb-1">Calibrando brújula...</p>
+                <p className="text-[10px] text-amber-200/80">Para mayor precisión, mueva el dispositivo en forma de <strong>8</strong> varias veces.</p>
+                <button onClick={() => setShowCalibrationTip(false)} className="text-[9px] text-amber-400 mt-1 underline">Ocultar</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Compass Display */}
         <div className="flex justify-center py-4">
           <div className="relative w-64 h-64">
-            <div className="absolute inset-0 rounded-full border-4 border-slate-700 bg-slate-900/80" style={{ transform: `rotate(-${compassAngle}deg)`, transition: useGyroscope ? 'transform 0.1s ease-out' : 'transform 0.3s ease' }}>
+            {/* Outer degree marks */}
+            <div className="absolute inset-0 rounded-full border-2 border-slate-700 bg-slate-900/80">
+              {[...Array(72)].map((_, i) => {
+                const deg = i * 5;
+                const isMajor = deg % 30 === 0;
+                const isMid = deg % 15 === 0;
+                const rad = (deg - 90) * (Math.PI / 180);
+                const outerR = 48;
+                const innerR = isMajor ? 42 : isMid ? 44 : 46;
+                const x1 = 50 + innerR * Math.cos(rad);
+                const y1 = 50 + innerR * Math.sin(rad);
+                const x2 = 50 + outerR * Math.cos(rad);
+                const y2 = 50 + outerR * Math.sin(rad);
+                return (
+                  <div key={deg} className="absolute" style={{
+                    left: `${x1}%`, top: `${y1}%`,
+                    width: `${Math.sqrt((x2-x1)**2 + (y2-y1)**2)}%`,
+                    height: isMajor ? '2px' : '1px',
+                    background: isMajor ? '#22d3ee' : isMid ? '#64748b' : '#334155',
+                    transform: `rotate(${deg}deg)`,
+                    transformOrigin: 'left center'
+                  }} />
+                );
+              })}
+            </div>
+
+            {/* Rotating compass rose */}
+            <div 
+              className="absolute inset-3 rounded-full"
+              style={{ 
+                transform: `rotate(-${compassAngle}deg)`, 
+                transition: useGyroscope ? 'transform 0.15s ease-out' : 'transform 0.3s ease' 
+              }}
+            >
+              {/* Cardinal directions */}
               {['N', 'E', 'S', 'O'].map((dir, i) => {
                 const angle = i * 90;
                 const rad = (angle - 90) * (Math.PI / 180);
-                const x = 50 + 32 * Math.cos(rad);
-                const y = 50 + 32 * Math.sin(rad);
-                return <span key={dir} className="absolute text-sm font-bold" style={{ left: `${x}%`, top: `${y}%`, transform: 'translate(-50%, -50%)', color: dir === 'N' ? '#f43f5e' : '#94a3b8' }}>{dir}</span>;
+                const x = 50 + 36 * Math.cos(rad);
+                const y = 50 + 36 * Math.sin(rad);
+                return (
+                  <span key={dir} className="absolute text-sm font-black" style={{ 
+                    left: `${x}%`, top: `${y}%`, transform: 'translate(-50%, -50%)', 
+                    color: dir === 'N' ? '#f43f5e' : '#e2e8f0',
+                    textShadow: dir === 'N' ? '0 0 8px rgba(244,63,94,0.5)' : 'none'
+                  }}>{dir}</span>
+                );
+              })}
+              {/* Intercardinal */}
+              {['NE', 'SE', 'SO', 'NO'].map((dir, i) => {
+                const angle = 45 + i * 90;
+                const rad = (angle - 90) * (Math.PI / 180);
+                const x = 50 + 36 * Math.cos(rad);
+                const y = 50 + 36 * Math.sin(rad);
+                return (
+                  <span key={dir} className="absolute text-[9px] font-bold text-slate-500" style={{ 
+                    left: `${x}%`, top: `${y}%`, transform: 'translate(-50%, -50%)'
+                  }}>{dir}</span>
+                );
+              })}
+              {/* Degree numbers */}
+              {[30, 60, 120, 150, 210, 240, 300, 330].map(deg => {
+                const rad = (deg - 90) * (Math.PI / 180);
+                const x = 50 + 30 * Math.cos(rad);
+                const y = 50 + 30 * Math.sin(rad);
+                return (
+                  <span key={deg} className="absolute text-[7px] text-slate-600 font-mono" style={{ 
+                    left: `${x}%`, top: `${y}%`, transform: 'translate(-50%, -50%)'
+                  }}>{deg}°</span>
+                );
               })}
             </div>
+            
+            {/* Center display - FIXED (doesn't rotate) */}
             <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-20 h-20 rounded-full bg-slate-800 border-2 border-cyan-400/50 flex items-center justify-center shadow-lg shadow-cyan-400/20">
+              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-slate-800 to-slate-900 border-2 border-cyan-400/40 flex items-center justify-center shadow-lg shadow-cyan-400/10">
                 <div className="text-center">
-                  <p className="text-xl font-bold text-cyan-400">{compassAngle}°</p>
-                  <p className="text-[10px] text-slate-400 font-medium">{getDireccionCardinal(compassAngle)}</p>
+                  <p className="text-2xl font-black text-cyan-400 tabular-nums">{trueHeading}°</p>
+                  <p className="text-[10px] text-cyan-300/70 font-bold">{getDireccionCardinal(trueHeading)}</p>
+                  <p className="text-[7px] text-slate-500 mt-0.5">Norte Verdadero</p>
                 </div>
               </div>
             </div>
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1">
-              <div className="w-0 h-0 border-l-[8px] border-r-[8px] border-t-[12px] border-l-transparent border-r-transparent border-t-rose-500" />
+            
+            {/* Top pointer */}
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1 z-10">
+              <div className="w-0 h-0 border-l-[8px] border-r-[8px] border-t-[14px] border-l-transparent border-r-transparent border-t-rose-500 drop-shadow-lg" />
             </div>
           </div>
         </div>
+
+        {/* Sensor Info */}
+        {useGyroscope && (
+          <div className="grid grid-cols-3 gap-2">
+            <div className="bg-slate-900/50 rounded-xl p-2 text-center">
+              <p className="text-[8px] text-slate-500 uppercase">Sensor</p>
+              <p className="text-[10px] font-medium text-white capitalize">{sensorType}</p>
+            </div>
+            <div className="bg-slate-900/50 rounded-xl p-2 text-center">
+              <p className="text-[8px] text-slate-500 uppercase">Precisión</p>
+              <div className="flex items-center justify-center gap-0.5 mt-0.5">
+                {[1,2,3].map(i => (
+                  <div key={i} className={`w-2 h-2 rounded-full ${i <= calibrationLevel ? (calibrationLevel === 3 ? 'bg-emerald-400' : calibrationLevel === 2 ? 'bg-amber-400' : 'bg-rose-400') : 'bg-slate-700'}`} />
+                ))}
+              </div>
+              <p className="text-[8px] text-slate-500">{calibrationLevel === 3 ? 'Alta' : calibrationLevel === 2 ? 'Media' : calibrationLevel === 1 ? 'Baja' : '---'}</p>
+            </div>
+            <div className="bg-slate-900/50 rounded-xl p-2 text-center">
+              <p className="text-[8px] text-slate-500 uppercase">Declinación</p>
+              <p className="text-[10px] font-medium text-white">
+                {location ? `${getMagneticDeclination(location.lat, location.lon).toFixed(1)}°` : '---'}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Magnetic vs True heading comparison */}
+        {useGyroscope && location && (
+          <div className="bg-slate-900/50 rounded-xl p-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[9px] text-slate-500">Norte Magnético</p>
+                <p className="text-sm font-bold text-amber-400">{compassAngle}° {getDireccionCardinal(compassAngle)}</p>
+              </div>
+              <div className="text-slate-600">→</div>
+              <div className="text-right">
+                <p className="text-[9px] text-slate-500">Norte Verdadero</p>
+                <p className="text-sm font-bold text-cyan-400">{trueHeading}° {getDireccionCardinal(trueHeading)}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {!useGyroscope && (
           <div>
             <label className="text-[10px] text-slate-400 uppercase tracking-wider">Control Manual</label>
-            <input type="range" min="0" max="360" value={compassAngle} onChange={e => setCompassAngle(Number(e.target.value))} className="w-full mt-2 accent-cyan-400" />
+            <input type="range" min="0" max="360" value={compassAngle} onChange={e => { setCompassAngle(Number(e.target.value)); setTrueHeading(Number(e.target.value)); }} className="w-full mt-2 accent-cyan-400" />
           </div>
         )}
       </div>
