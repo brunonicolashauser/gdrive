@@ -4,7 +4,7 @@ import {
   ShoppingCart, Package, Search, MapPin, AlertTriangle, CheckCircle, XCircle,
   Phone, MessageCircle, Settings, Plus, Trash2, Edit, Lock, Unlock,
   Smartphone, Monitor, Droplets, Ship, Zap, Activity, Navigation,
-  Percent, X, Check, Home, Wrench, Bell, ChevronRight, Camera, Upload, Image as ImageIcon, Calendar, Mail
+  Percent, X, Check, Home, Wrench, Bell, ChevronRight, Camera, Upload, Image as ImageIcon, Calendar, Mail, Users
 } from 'lucide-react';
 
 // ==================== DATA ====================
@@ -111,27 +111,76 @@ export default function App() {
 
 // ==================== LOGIN SCREEN ====================
 function LoginScreen({ viewMode, setViewMode, onLogin }: any) {
+  const [mode, setMode] = useState<'login' | 'register'>('login');
   const [formData, setFormData] = useState({
     nombreEmpresa: '',
     nombreCliente: '',
     rutEmpresa: '',
-    telefono: ''
+    telefono: '',
+    password: ''
   });
+  const [loginRut, setLoginRut] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
   const [errors, setErrors] = useState<any>({});
 
-  const validateForm = () => {
+  const getUsers = () => {
+    const users = localStorage.getItem('gerdiver_users');
+    return users ? JSON.parse(users) : [];
+  };
+
+  const saveUser = (user: any) => {
+    const users = getUsers();
+    users.push(user);
+    localStorage.setItem('gerdiver_users', JSON.stringify(users));
+  };
+
+  const validateRegister = () => {
     const newErrors: any = {};
     if (!formData.nombreEmpresa.trim()) newErrors.nombreEmpresa = 'Nombre de empresa requerido';
     if (!formData.nombreCliente.trim()) newErrors.nombreCliente = 'Nombre de cliente requerido';
     if (!formData.rutEmpresa.trim()) newErrors.rutEmpresa = 'RUT requerido';
     if (!formData.telefono.trim()) newErrors.telefono = 'Teléfono requerido';
+    if (!formData.password.trim()) newErrors.password = 'Contraseña requerida';
+    if (formData.password.length < 6) newErrors.password = 'La contraseña debe tener al menos 6 caracteres';
+    
+    const users = getUsers();
+    if (users.find((u: any) => u.rutEmpresa === formData.rutEmpresa)) {
+      newErrors.rutEmpresa = 'Este RUT ya está registrado';
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const validateLogin = () => {
+    const newErrors: any = {};
+    if (!loginRut.trim()) newErrors.loginRut = 'RUT requerido';
+    if (!loginPassword.trim()) newErrors.loginPassword = 'Contraseña requerida';
+    
+    const users = getUsers();
+    const user = users.find((u: any) => u.rutEmpresa === loginRut);
+    if (!user) {
+      newErrors.loginRut = 'RUT no registrado';
+    } else if (user.password !== loginPassword) {
+      newErrors.loginPassword = 'Contraseña incorrecta';
+    }
+    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = () => {
-    if (validateForm()) {
-      onLogin(formData);
+    if (mode === 'register') {
+      if (validateRegister()) {
+        saveUser(formData);
+        onLogin(formData);
+      }
+    } else {
+      if (validateLogin()) {
+        const users = getUsers();
+        const user = users.find((u: any) => u.rutEmpresa === loginRut);
+        onLogin(user);
+      }
     }
   };
 
@@ -163,66 +212,136 @@ function LoginScreen({ viewMode, setViewMode, onLogin }: any) {
         </div>
 
         <div className="bg-slate-900/80 backdrop-blur-xl rounded-2xl p-6 border border-slate-700 shadow-2xl">
-          <h2 className="text-lg font-bold text-white mb-1">Registro de Cliente</h2>
-          <p className="text-xs text-slate-400 mb-6">Ingrese los datos de su empresa para continuar</p>
-
-          <div className="space-y-4">
-            <div>
-              <label className="text-[10px] text-slate-400 uppercase tracking-wider mb-1 block">Nombre de la Empresa *</label>
-              <input
-                type="text"
-                value={formData.nombreEmpresa}
-                onChange={e => setFormData({ ...formData, nombreEmpresa: e.target.value })}
-                placeholder="Ej: Salmones Austral S.A."
-                className={`w-full px-3 py-2.5 bg-slate-800 border ${errors.nombreEmpresa ? 'border-rose-500' : 'border-slate-700'} rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500`}
-              />
-              {errors.nombreEmpresa && <p className="text-[10px] text-rose-400 mt-1">{errors.nombreEmpresa}</p>}
-            </div>
-
-            <div>
-              <label className="text-[10px] text-slate-400 uppercase tracking-wider mb-1 block">Nombre del Cliente *</label>
-              <input
-                type="text"
-                value={formData.nombreCliente}
-                onChange={e => setFormData({ ...formData, nombreCliente: e.target.value })}
-                placeholder="Ej: Juan Pérez González"
-                className={`w-full px-3 py-2.5 bg-slate-800 border ${errors.nombreCliente ? 'border-rose-500' : 'border-slate-700'} rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500`}
-              />
-              {errors.nombreCliente && <p className="text-[10px] text-rose-400 mt-1">{errors.nombreCliente}</p>}
-            </div>
-
-            <div>
-              <label className="text-[10px] text-slate-400 uppercase tracking-wider mb-1 block">RUT de la Empresa *</label>
-              <input
-                type="text"
-                value={formData.rutEmpresa}
-                onChange={e => setFormData({ ...formData, rutEmpresa: e.target.value })}
-                placeholder="Ej: 12.345.678-9"
-                className={`w-full px-3 py-2.5 bg-slate-800 border ${errors.rutEmpresa ? 'border-rose-500' : 'border-slate-700'} rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500`}
-              />
-              {errors.rutEmpresa && <p className="text-[10px] text-rose-400 mt-1">{errors.rutEmpresa}</p>}
-            </div>
-
-            <div>
-              <label className="text-[10px] text-slate-400 uppercase tracking-wider mb-1 block">Número de Teléfono *</label>
-              <input
-                type="tel"
-                value={formData.telefono}
-                onChange={e => setFormData({ ...formData, telefono: e.target.value })}
-                placeholder="Ej: +56 9 1234 5678"
-                className={`w-full px-3 py-2.5 bg-slate-800 border ${errors.telefono ? 'border-rose-500' : 'border-slate-700'} rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500`}
-              />
-              {errors.telefono && <p className="text-[10px] text-rose-400 mt-1">{errors.telefono}</p>}
-            </div>
+          <div className="flex gap-2 mb-6">
+            <button
+              onClick={() => { setMode('login'); setErrors({}); }}
+              className={`flex-1 py-2 rounded-xl text-xs font-semibold transition-all ${mode === 'login' ? 'bg-cyan-500 text-slate-950' : 'bg-slate-800 text-slate-400'}`}
+            >
+              Iniciar Sesión
+            </button>
+            <button
+              onClick={() => { setMode('register'); setErrors({}); }}
+              className={`flex-1 py-2 rounded-xl text-xs font-semibold transition-all ${mode === 'register' ? 'bg-emerald-500 text-slate-950' : 'bg-slate-800 text-slate-400'}`}
+            >
+              Registrarse
+            </button>
           </div>
 
-          <button
-            onClick={handleSubmit}
-            className="w-full mt-6 py-3 bg-gradient-to-r from-cyan-400 to-emerald-400 text-slate-950 font-bold rounded-xl text-sm hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
-          >
-            <Check size={16} />
-            Ingresar a la Aplicación
-          </button>
+          {mode === 'register' ? (
+            <>
+              <h2 className="text-lg font-bold text-white mb-1">Registro de Cliente</h2>
+              <p className="text-xs text-slate-400 mb-6">Ingrese los datos de su empresa para crear una cuenta</p>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="text-[10px] text-slate-400 uppercase tracking-wider mb-1 block">Nombre de la Empresa *</label>
+                  <input
+                    type="text"
+                    value={formData.nombreEmpresa}
+                    onChange={e => setFormData({ ...formData, nombreEmpresa: e.target.value })}
+                    placeholder="Ej: Salmones Austral S.A."
+                    className={`w-full px-3 py-2.5 bg-slate-800 border ${errors.nombreEmpresa ? 'border-rose-500' : 'border-slate-700'} rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500`}
+                  />
+                  {errors.nombreEmpresa && <p className="text-[10px] text-rose-400 mt-1">{errors.nombreEmpresa}</p>}
+                </div>
+
+                <div>
+                  <label className="text-[10px] text-slate-400 uppercase tracking-wider mb-1 block">Nombre del Cliente *</label>
+                  <input
+                    type="text"
+                    value={formData.nombreCliente}
+                    onChange={e => setFormData({ ...formData, nombreCliente: e.target.value })}
+                    placeholder="Ej: Juan Pérez González"
+                    className={`w-full px-3 py-2.5 bg-slate-800 border ${errors.nombreCliente ? 'border-rose-500' : 'border-slate-700'} rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500`}
+                  />
+                  {errors.nombreCliente && <p className="text-[10px] text-rose-400 mt-1">{errors.nombreCliente}</p>}
+                </div>
+
+                <div>
+                  <label className="text-[10px] text-slate-400 uppercase tracking-wider mb-1 block">RUT de la Empresa *</label>
+                  <input
+                    type="text"
+                    value={formData.rutEmpresa}
+                    onChange={e => setFormData({ ...formData, rutEmpresa: e.target.value })}
+                    placeholder="Ej: 12.345.678-9"
+                    className={`w-full px-3 py-2.5 bg-slate-800 border ${errors.rutEmpresa ? 'border-rose-500' : 'border-slate-700'} rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500`}
+                  />
+                  {errors.rutEmpresa && <p className="text-[10px] text-rose-400 mt-1">{errors.rutEmpresa}</p>}
+                </div>
+
+                <div>
+                  <label className="text-[10px] text-slate-400 uppercase tracking-wider mb-1 block">Número de Teléfono *</label>
+                  <input
+                    type="tel"
+                    value={formData.telefono}
+                    onChange={e => setFormData({ ...formData, telefono: e.target.value })}
+                    placeholder="Ej: +56 9 1234 5678"
+                    className={`w-full px-3 py-2.5 bg-slate-800 border ${errors.telefono ? 'border-rose-500' : 'border-slate-700'} rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500`}
+                  />
+                  {errors.telefono && <p className="text-[10px] text-rose-400 mt-1">{errors.telefono}</p>}
+                </div>
+
+                <div>
+                  <label className="text-[10px] text-slate-400 uppercase tracking-wider mb-1 block">Contraseña *</label>
+                  <input
+                    type="password"
+                    value={formData.password}
+                    onChange={e => setFormData({ ...formData, password: e.target.value })}
+                    placeholder="Mínimo 6 caracteres"
+                    className={`w-full px-3 py-2.5 bg-slate-800 border ${errors.password ? 'border-rose-500' : 'border-slate-700'} rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500`}
+                  />
+                  {errors.password && <p className="text-[10px] text-rose-400 mt-1">{errors.password}</p>}
+                </div>
+              </div>
+
+              <button
+                onClick={handleSubmit}
+                className="w-full mt-6 py-3 bg-gradient-to-r from-emerald-400 to-cyan-400 text-slate-950 font-bold rounded-xl text-sm hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+              >
+                <Check size={16} />
+                Crear Cuenta
+              </button>
+            </>
+          ) : (
+            <>
+              <h2 className="text-lg font-bold text-white mb-1">Iniciar Sesión</h2>
+              <p className="text-xs text-slate-400 mb-6">Ingrese su RUT y contraseña</p>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="text-[10px] text-slate-400 uppercase tracking-wider mb-1 block">RUT de la Empresa *</label>
+                  <input
+                    type="text"
+                    value={loginRut}
+                    onChange={e => setLoginRut(e.target.value)}
+                    placeholder="Ej: 12.345.678-9"
+                    className={`w-full px-3 py-2.5 bg-slate-800 border ${errors.loginRut ? 'border-rose-500' : 'border-slate-700'} rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500`}
+                  />
+                  {errors.loginRut && <p className="text-[10px] text-rose-400 mt-1">{errors.loginRut}</p>}
+                </div>
+
+                <div>
+                  <label className="text-[10px] text-slate-400 uppercase tracking-wider mb-1 block">Contraseña *</label>
+                  <input
+                    type="password"
+                    value={loginPassword}
+                    onChange={e => setLoginPassword(e.target.value)}
+                    placeholder="Ingrese su contraseña"
+                    className={`w-full px-3 py-2.5 bg-slate-800 border ${errors.loginPassword ? 'border-rose-500' : 'border-slate-700'} rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500`}
+                  />
+                  {errors.loginPassword && <p className="text-[10px] text-rose-400 mt-1">{errors.loginPassword}</p>}
+                </div>
+              </div>
+
+              <button
+                onClick={handleSubmit}
+                className="w-full mt-6 py-3 bg-gradient-to-r from-cyan-400 to-emerald-400 text-slate-950 font-bold rounded-xl text-sm hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+              >
+                <Unlock size={16} />
+                Ingresar
+              </button>
+            </>
+          )}
         </div>
 
         <div className="mt-6 text-center">
@@ -1796,9 +1915,15 @@ function AdminModule({ products, setProducts }: any) {
   const [editingProduct, setEditingProduct] = useState<any>(null);
   const [formData, setFormData] = useState({ nombre: '', categoria: '', precioVenta: 0, stock: 0, imagen: '📦', descripcion: '' });
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [showUsers, setShowUsers] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleLogin = () => { if (pin === '1234') setIsAuthenticated(true); };
+  const handleLogin = () => { if (pin === '2024@') setIsAuthenticated(true); };
+
+  const getUsers = () => {
+    const users = localStorage.getItem('gerdiver_users');
+    return users ? JSON.parse(users) : [];
+  };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -1833,12 +1958,11 @@ function AdminModule({ products, setProducts }: any) {
             <Lock size={24} className="text-rose-400" />
           </div>
           <h2 className="text-lg font-bold text-white">Panel Admin</h2>
-          <p className="text-xs text-slate-400">Ingrese PIN de acceso</p>
-          <input type="password" value={pin} onChange={e => setPin(e.target.value)} placeholder="PIN (1234)" className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-center text-lg text-white tracking-widest focus:border-rose-500 focus:outline-none" onKeyDown={e => e.key === 'Enter' && handleLogin()} />
+          <p className="text-xs text-slate-400">Ingrese su PIN</p>
+          <input type="password" value={pin} onChange={e => setPin(e.target.value)} placeholder="••••••" className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-center text-lg text-white tracking-widest focus:border-rose-500 focus:outline-none" onKeyDown={e => e.key === 'Enter' && handleLogin()} />
           <button onClick={handleLogin} className="w-full py-3 bg-gradient-to-r from-rose-500 to-rose-400 text-white font-bold rounded-xl text-sm">
             <Unlock size={16} className="inline mr-2" />Acceder
           </button>
-          <p className="text-[10px] text-slate-500">Demo: PIN 1234</p>
         </div>
       </div>
     );
@@ -1856,10 +1980,48 @@ function AdminModule({ products, setProducts }: any) {
         </button>
       </div>
 
-      <div className="bg-slate-800/50 rounded-xl p-3 border border-slate-700">
-        <p className="text-[10px] text-slate-500">Total Productos</p>
-        <p className="text-2xl font-bold text-white">{products.length}</p>
+      <div className="grid grid-cols-2 gap-3">
+        <div className="bg-slate-800/50 rounded-xl p-3 border border-slate-700">
+          <p className="text-[10px] text-slate-500">Total Productos</p>
+          <p className="text-2xl font-bold text-white">{products.length}</p>
+        </div>
+        <button onClick={() => setShowUsers(!showUsers)} className="bg-slate-800/50 rounded-xl p-3 border border-slate-700 text-left hover:border-cyan-500/50 transition-all">
+          <p className="text-[10px] text-slate-500">Cuentas Registradas</p>
+          <p className="text-2xl font-bold text-cyan-400">{getUsers().length}</p>
+        </button>
       </div>
+
+      {showUsers && (
+        <div className="bg-slate-800/50 rounded-2xl p-4 border border-slate-700">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Users size={16} className="text-cyan-400" />
+              <h3 className="text-sm font-semibold text-white">Cuentas Registradas</h3>
+            </div>
+            <button onClick={() => setShowUsers(false)} className="p-1 rounded-lg bg-slate-700">
+              <X size={14} className="text-slate-400" />
+            </button>
+          </div>
+          <div className="space-y-2 max-h-96 overflow-y-auto">
+            {getUsers().length === 0 ? (
+              <p className="text-xs text-slate-500 text-center py-4">No hay cuentas registradas</p>
+            ) : (
+              getUsers().map((user: any, index: number) => (
+                <div key={index} className="bg-slate-900/50 rounded-xl p-3 border border-slate-700">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <p className="text-xs font-semibold text-white">{user.nombreEmpresa}</p>
+                      <p className="text-[10px] text-slate-400 mt-1">👤 {user.nombreCliente}</p>
+                      <p className="text-[10px] text-slate-400">🆔 {user.rutEmpresa}</p>
+                      <p className="text-[10px] text-slate-400">📞 {user.telefono}</p>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      )}
 
       <div className="flex items-center gap-2">
         <Package size={16} className="text-rose-400" />
