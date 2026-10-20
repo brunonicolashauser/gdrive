@@ -853,9 +853,9 @@ function CatalogoModule({ cart, setCart, products }: any) {
 function TallerModule() {
   const WHATSAPP_NUMBER = '56997756020';
   const [ordenes, setOrdenes] = useState<any[]>([
-    { id: 'GERD-CM4821A-001', numeroSerie: 'CM-4821-A', pruebaAerostatica: 'AP-300-OK', anioFabricacion: '2019', foto: null, paso: 4, cliente: 'Salmones Austral S.A.', telefono: '+56 9 1234 5678', fecha: '2024-01-15' },
-    { id: 'GERD-BT7733C-002', numeroSerie: 'BT-7733-C', pruebaAerostatica: 'AP-250-OK', anioFabricacion: '2020', foto: null, paso: 6, cliente: 'Multiexport Foods', telefono: '+56 9 8765 4321', fecha: '2024-01-10' },
-    { id: 'GERD-OX1192B-003', numeroSerie: 'OX-1192-B', pruebaAerostatica: 'Pendiente', anioFabricacion: '2021', foto: null, paso: 2, cliente: 'Marine Harvest Chile', telefono: '+56 9 5555 1234', fecha: '2024-01-18' },
+    { id: 'GERD-CM4821A-001', numeroSerie: 'CM-4821-A', anioFabricacion: '2019', foto: null, paso: 4, cliente: 'Salmones Austral S.A.', telefono: '+56 9 1234 5678', fecha: '2024-01-15' },
+    { id: 'GERD-BT7733C-002', numeroSerie: 'BT-7733-C', anioFabricacion: '2020', foto: null, paso: 6, cliente: 'Multiexport Foods', telefono: '+56 9 8765 4321', fecha: '2024-01-10' },
+    { id: 'GERD-OX1192B-003', numeroSerie: 'OX-1192-B', anioFabricacion: '2021', foto: null, paso: 2, cliente: 'Marine Harvest Chile', telefono: '+56 9 5555 1234', fecha: '2024-01-18' },
   ]);
   const [showForm, setShowForm] = useState(false);
   const [editingOrden, setEditingOrden] = useState<any>(null);
@@ -866,7 +866,6 @@ function TallerModule() {
 
   const [formData, setFormData] = useState({
     numeroSerie: '',
-    pruebaAerostatica: '',
     anioFabricacion: '',
     foto: null as string | null,
     cliente: '',
@@ -904,7 +903,6 @@ function TallerModule() {
     msg += `━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
     msg += `📋 *ID Orden:* ${orden.id}\n`;
     msg += `🔢 *N° Serie:* ${orden.numeroSerie}\n`;
-    msg += `🧪 *Prueba Aerostática:* ${orden.pruebaAerostatica || 'Pendiente'}\n`;
     msg += `📅 *Año Fabricación:* ${orden.anioFabricacion || 'No indicado'}\n`;
     msg += `🏢 *Cliente:* ${orden.cliente || 'No indicado'}\n`;
     msg += `📞 *Teléfono:* ${orden.telefono || 'No indicado'}\n`;
@@ -935,14 +933,13 @@ function TallerModule() {
     }
     setShowForm(false);
     setEditingOrden(null);
-    setFormData({ numeroSerie: '', pruebaAerostatica: '', anioFabricacion: '', foto: null, cliente: '', telefono: '' });
+    setFormData({ numeroSerie: '', anioFabricacion: '', foto: null, cliente: '', telefono: '' });
   };
 
   const editOrden = (orden: any) => {
     setEditingOrden(orden);
     setFormData({
       numeroSerie: orden.numeroSerie,
-      pruebaAerostatica: orden.pruebaAerostatica,
       anioFabricacion: orden.anioFabricacion,
       foto: orden.foto,
       cliente: orden.cliente,
@@ -969,7 +966,7 @@ function TallerModule() {
           <Wrench size={20} className="text-rose-400" />
           <h2 className="text-lg font-bold text-white">Agendamiento</h2>
         </div>
-        <button onClick={() => { setShowForm(true); setEditingOrden(null); setFormData({ numeroSerie: '', pruebaAerostatica: '', anioFabricacion: '', foto: null, cliente: '', telefono: '' }); }} className="px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/30 rounded-lg text-emerald-400 text-[11px] font-semibold">
+        <button onClick={() => { setShowForm(true); setEditingOrden(null); setFormData({ numeroSerie: '', anioFabricacion: '', foto: null, cliente: '', telefono: '' }); }} className="px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/30 rounded-lg text-emerald-400 text-[11px] font-semibold">
           <Plus size={12} className="inline mr-1" />Nueva
         </button>
       </div>
@@ -1019,10 +1016,6 @@ function TallerModule() {
                       <p className="text-xs font-medium text-white">{o.numeroSerie}</p>
                     </div>
                     <div>
-                      <p className="text-[9px] text-slate-500">Prueba Aerostática</p>
-                      <p className="text-xs font-medium text-white">{o.pruebaAerostatica}</p>
-                    </div>
-                    <div>
                       <p className="text-[9px] text-slate-500">Año Fabricación</p>
                       <p className="text-xs font-medium text-white">{o.anioFabricacion}</p>
                     </div>
@@ -1030,7 +1023,7 @@ function TallerModule() {
                       <p className="text-[9px] text-slate-500">Cliente</p>
                       <p className="text-xs font-medium text-white">{o.cliente}</p>
                     </div>
-                    <div className="col-span-2">
+                    <div>
                       <p className="text-[9px] text-slate-500">Teléfono</p>
                       <p className="text-xs font-medium text-white">{o.telefono || 'No indicado'}</p>
                     </div>
@@ -1123,17 +1116,6 @@ function TallerModule() {
                     className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-rose-500"
                   />
                   <p className="text-[9px] text-slate-500 mt-1">Ingrese letras y números según la etiqueta del cilindro</p>
-                </div>
-
-                <div>
-                  <label className="text-[10px] text-slate-400 uppercase tracking-wider mb-1 block">Prueba Aerostática</label>
-                  <input
-                    value={formData.pruebaAerostatica}
-                    onChange={e => setFormData({ ...formData, pruebaAerostatica: e.target.value })}
-                    placeholder="Ej: AP-300-OK (letras y números)"
-                    className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-rose-500"
-                  />
-                  <p className="text-[9px] text-slate-500 mt-1">Resultado de la prueba (presión, estado, etc.)</p>
                 </div>
 
                 <div>
