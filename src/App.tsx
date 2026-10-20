@@ -128,10 +128,25 @@ function LoginScreen({ viewMode, setViewMode, onLogin }: any) {
     return users ? JSON.parse(users) : [];
   };
 
+  const getLoginHistory = () => {
+    const history = localStorage.getItem('gerdiver_login_history');
+    return history ? JSON.parse(history) : [];
+  };
+
   const saveUser = (user: any) => {
     const users = getUsers();
     users.push(user);
     localStorage.setItem('gerdiver_users', JSON.stringify(users));
+  };
+
+  const recordLogin = (user: any) => {
+    const history = getLoginHistory();
+    history.push({
+      ...user,
+      loginTime: new Date().toISOString(),
+      loginDate: new Date().toLocaleString('es-CL')
+    });
+    localStorage.setItem('gerdiver_login_history', JSON.stringify(history));
   };
 
   const validateRegister = () => {
@@ -173,12 +188,14 @@ function LoginScreen({ viewMode, setViewMode, onLogin }: any) {
     if (mode === 'register') {
       if (validateRegister()) {
         saveUser(formData);
+        recordLogin(formData);
         onLogin(formData);
       }
     } else {
       if (validateLogin()) {
         const users = getUsers();
         const user = users.find((u: any) => u.rutEmpresa === loginRut);
+        recordLogin(user);
         onLogin(user);
       }
     }
@@ -1916,6 +1933,7 @@ function AdminModule({ products, setProducts }: any) {
   const [formData, setFormData] = useState({ nombre: '', categoria: '', precioVenta: 0, stock: 0, imagen: '📦', descripcion: '' });
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [showUsers, setShowUsers] = useState(false);
+  const [usersTab, setUsersTab] = useState<'registered' | 'sessions'>('registered');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleLogin = () => { if (pin === '2024@') setIsAuthenticated(true); };
@@ -1923,6 +1941,11 @@ function AdminModule({ products, setProducts }: any) {
   const getUsers = () => {
     const users = localStorage.getItem('gerdiver_users');
     return users ? JSON.parse(users) : [];
+  };
+
+  const getLoginHistory = () => {
+    const history = localStorage.getItem('gerdiver_login_history');
+    return history ? JSON.parse(history) : [];
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1996,28 +2019,79 @@ function AdminModule({ products, setProducts }: any) {
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <Users size={16} className="text-cyan-400" />
-              <h3 className="text-sm font-semibold text-white">Cuentas Registradas</h3>
+              <h3 className="text-sm font-semibold text-white">Gestión de Usuarios</h3>
             </div>
             <button onClick={() => setShowUsers(false)} className="p-1 rounded-lg bg-slate-700">
               <X size={14} className="text-slate-400" />
             </button>
           </div>
+
+          {/* Tabs */}
+          <div className="flex gap-2 mb-4">
+            <button
+              onClick={() => setUsersTab('registered')}
+              className={`flex-1 py-2 rounded-lg text-xs font-medium transition-all ${
+                usersTab === 'registered'
+                  ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
+                  : 'bg-slate-800 text-slate-400'
+              }`}
+            >
+              Cuentas Registradas ({getUsers().length})
+            </button>
+            <button
+              onClick={() => setUsersTab('sessions')}
+              className={`flex-1 py-2 rounded-lg text-xs font-medium transition-all ${
+                usersTab === 'sessions'
+                  ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                  : 'bg-slate-800 text-slate-400'
+              }`}
+            >
+              Historial de Sesiones ({getLoginHistory().length})
+            </button>
+          </div>
+
+          {/* Content */}
           <div className="space-y-2 max-h-96 overflow-y-auto">
-            {getUsers().length === 0 ? (
-              <p className="text-xs text-slate-500 text-center py-4">No hay cuentas registradas</p>
-            ) : (
-              getUsers().map((user: any, index: number) => (
-                <div key={index} className="bg-slate-900/50 rounded-xl p-3 border border-slate-700">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <p className="text-xs font-semibold text-white">{user.nombreEmpresa}</p>
-                      <p className="text-[10px] text-slate-400 mt-1">👤 {user.nombreCliente}</p>
-                      <p className="text-[10px] text-slate-400">🆔 {user.rutEmpresa}</p>
-                      <p className="text-[10px] text-slate-400">📞 {user.telefono}</p>
+            {usersTab === 'registered' ? (
+              getUsers().length === 0 ? (
+                <p className="text-xs text-slate-500 text-center py-4">No hay cuentas registradas</p>
+              ) : (
+                getUsers().map((user: any, index: number) => (
+                  <div key={index} className="bg-slate-900/50 rounded-xl p-3 border border-slate-700">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <p className="text-xs font-semibold text-white">{user.nombreEmpresa}</p>
+                        <p className="text-[10px] text-slate-400 mt-1">👤 {user.nombreCliente}</p>
+                        <p className="text-[10px] text-slate-400">🆔 {user.rutEmpresa}</p>
+                        <p className="text-[10px] text-slate-400">📞 {user.telefono}</p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))
+                ))
+              )
+            ) : (
+              getLoginHistory().length === 0 ? (
+                <p className="text-xs text-slate-500 text-center py-4">No hay sesiones registradas</p>
+              ) : (
+                getLoginHistory().slice().reverse().map((session: any, index: number) => (
+                  <div key={index} className="bg-slate-900/50 rounded-xl p-3 border border-slate-700">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <p className="text-xs font-semibold text-white">{session.nombreEmpresa}</p>
+                          <span className="text-[9px] px-2 py-0.5 bg-emerald-500/20 text-emerald-400 rounded-full">
+                            Sesión
+                          </span>
+                        </div>
+                        <p className="text-[10px] text-slate-400">👤 {session.nombreCliente}</p>
+                        <p className="text-[10px] text-slate-400">🆔 {session.rutEmpresa}</p>
+                        <p className="text-[10px] text-slate-400">📞 {session.telefono}</p>
+                        <p className="text-[10px] text-cyan-400 mt-1">🕐 {session.loginDate}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )
             )}
           </div>
         </div>
