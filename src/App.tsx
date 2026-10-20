@@ -797,7 +797,13 @@ function CatalogoModule({ cart, setCart, products }: any) {
         {filtered.map((p: any) => (
           <div key={p.id} className="bg-slate-800/50 rounded-xl p-4 border border-slate-700 hover:border-amber-500/30 transition-all">
             <div className="flex items-start gap-3">
-              <div className="w-16 h-16 rounded-xl bg-slate-900 flex items-center justify-center text-2xl flex-shrink-0">{p.imagen}</div>
+              <div className="w-16 h-16 rounded-xl bg-slate-900 flex items-center justify-center text-2xl flex-shrink-0 overflow-hidden">
+                {p.imagen && (p.imagen.startsWith('data:image') || p.imagen.startsWith('http')) ? (
+                  <img src={p.imagen} alt={p.nombre} className="w-full h-full object-cover" />
+                ) : (
+                  <span>{p.imagen || '📦'}</span>
+                )}
+              </div>
               <div className="flex-1 min-w-0">
                 <h3 className="text-sm font-semibold text-white truncate">{p.nombre}</h3>
                 <p className="text-[10px] text-slate-400">{p.categoria} • Stock: {p.stock}</p>
@@ -818,7 +824,13 @@ function CatalogoModule({ cart, setCart, products }: any) {
                 <button onClick={() => setSelectedProduct(null)} className="p-1 rounded-lg bg-slate-800"><X size={16} className="text-slate-400" /></button>
               </div>
               <div className="flex items-center gap-3">
-                <div className="w-24 h-24 rounded-xl bg-slate-800 flex items-center justify-center text-4xl flex-shrink-0">{selectedProduct.imagen}</div>
+                <div className="w-24 h-24 rounded-xl bg-slate-800 flex items-center justify-center text-4xl flex-shrink-0 overflow-hidden">
+                  {selectedProduct.imagen && (selectedProduct.imagen.startsWith('data:image') || selectedProduct.imagen.startsWith('http')) ? (
+                    <img src={selectedProduct.imagen} alt={selectedProduct.nombre} className="w-full h-full object-cover" />
+                  ) : (
+                    <span>{selectedProduct.imagen || '📦'}</span>
+                  )}
+                </div>
                 <div>
                   <p className="text-xs text-slate-400">{selectedProduct.categoria}</p>
                   <p className="text-sm text-slate-300 mt-1">{selectedProduct.descripcion}</p>
@@ -1194,8 +1206,23 @@ function AdminModule({ products, setProducts }: any) {
   const [showForm, setShowForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState<any>(null);
   const [formData, setFormData] = useState({ nombre: '', categoria: '', precioVenta: 0, stock: 0, imagen: '📦', descripcion: '' });
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleLogin = () => { if (pin === '1234') setIsAuthenticated(true); };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const result = reader.result as string;
+        setImagePreview(result);
+        setFormData({ ...formData, imagen: result });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const saveProduct = () => {
     if (!formData.nombre || !formData.categoria) return;
@@ -1206,6 +1233,7 @@ function AdminModule({ products, setProducts }: any) {
     }
     setShowForm(false); setEditingProduct(null);
     setFormData({ nombre: '', categoria: '', precioVenta: 0, stock: 0, imagen: '📦', descripcion: '' });
+    setImagePreview(null);
   };
 
   if (!isAuthenticated) {
@@ -1257,14 +1285,20 @@ function AdminModule({ products, setProducts }: any) {
         {products.map((p: any) => (
           <div key={p.id} className="bg-slate-800/50 rounded-xl p-3 border border-slate-700">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-lg bg-slate-900 flex items-center justify-center text-lg flex-shrink-0">{p.imagen}</div>
+              <div className="w-12 h-12 rounded-lg bg-slate-900 flex items-center justify-center text-lg flex-shrink-0 overflow-hidden">
+                {p.imagen && (p.imagen.startsWith('data:image') || p.imagen.startsWith('http')) ? (
+                  <img src={p.imagen} alt={p.nombre} className="w-full h-full object-cover" />
+                ) : (
+                  <span>{p.imagen || '📦'}</span>
+                )}
+              </div>
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-semibold text-white truncate">{p.nombre}</p>
                 <p className="text-[10px] text-slate-400">{p.categoria} • Stock: {p.stock}</p>
                 <p className="text-[10px] text-emerald-400">{formatCLP(p.precioVenta)}</p>
               </div>
               <div className="flex gap-1">
-                <button onClick={() => { setEditingProduct(p); setFormData({ nombre: p.nombre, categoria: p.categoria, precioVenta: p.precioVenta, stock: p.stock, imagen: p.imagen, descripcion: p.descripcion }); setShowForm(true); }} className="p-1.5 rounded-lg bg-slate-700 text-slate-400"><Edit size={12} /></button>
+                <button onClick={() => { setEditingProduct(p); setFormData({ nombre: p.nombre, categoria: p.categoria, precioVenta: p.precioVenta, stock: p.stock, imagen: p.imagen, descripcion: p.descripcion }); setImagePreview(p.imagen && (p.imagen.startsWith('data:image') || p.imagen.startsWith('http')) ? p.imagen : null); setShowForm(true); }} className="p-1.5 rounded-lg bg-slate-700 text-slate-400"><Edit size={12} /></button>
                 <button onClick={() => setProducts(products.filter((pr: any) => pr.id !== p.id))} className="p-1.5 rounded-lg bg-rose-500/20 text-rose-400"><Trash2 size={12} /></button>
               </div>
             </div>
@@ -1289,10 +1323,42 @@ function AdminModule({ products, setProducts }: any) {
                   <label className="text-[10px] text-slate-400 uppercase tracking-wider mb-1 block">Categoría *</label>
                   <input value={formData.categoria} onChange={e => setFormData({ ...formData, categoria: e.target.value })} placeholder="Categoría" className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-rose-500" />
                 </div>
+                
+                {/* Image Upload Section */}
                 <div>
-                  <label className="text-[10px] text-slate-400 uppercase tracking-wider mb-1 block">Emoji / Ícono</label>
-                  <input value={formData.imagen} onChange={e => setFormData({ ...formData, imagen: e.target.value })} placeholder="📦" className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-rose-500" />
+                  <label className="text-[10px] text-slate-400 uppercase tracking-wider mb-1 block">Imagen de Referencia</label>
+                  <div className="relative">
+                    {imagePreview ? (
+                      <div className="relative w-full h-40 rounded-xl overflow-hidden bg-slate-800 border border-slate-700">
+                        <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
+                        <button 
+                          onClick={() => { setImagePreview(null); setFormData({ ...formData, imagen: '📦' }); }}
+                          className="absolute top-2 right-2 p-1.5 bg-rose-500/80 rounded-lg"
+                        >
+                          <X size={14} className="text-white" />
+                        </button>
+                      </div>
+                    ) : (
+                      <button 
+                        onClick={() => fileInputRef.current?.click()}
+                        className="w-full h-40 rounded-xl bg-slate-800 border-2 border-dashed border-slate-600 flex flex-col items-center justify-center gap-2 hover:border-emerald-500/50 transition-colors"
+                      >
+                        <Camera size={32} className="text-slate-500" />
+                        <span className="text-xs text-slate-400">Toca para subir imagen</span>
+                        <span className="text-[9px] text-slate-500">JPG, PNG • Máx 5MB</span>
+                      </button>
+                    )}
+                    <input 
+                      ref={fileInputRef}
+                      type="file" 
+                      accept="image/*" 
+                      onChange={handleImageUpload}
+                      className="hidden"
+                    />
+                  </div>
+                  <p className="text-[9px] text-slate-500 mt-1">Opcional: Sube una foto del producto</p>
                 </div>
+
                 <div>
                   <label className="text-[10px] text-slate-400 uppercase tracking-wider mb-1 block">Descripción</label>
                   <textarea value={formData.descripcion} onChange={e => setFormData({ ...formData, descripcion: e.target.value })} placeholder="Descripción del producto" rows={3} className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-rose-500 resize-none" />
@@ -1436,7 +1502,13 @@ function CartModal({ cart, setCart, onClose }: any) {
                     <div key={item.id} className="bg-slate-800/50 rounded-xl p-3 border border-slate-700">
                       <div className="flex items-start justify-between">
                         <div className="flex items-center gap-2">
-                          <div className="w-10 h-10 rounded-lg bg-slate-900 flex items-center justify-center text-lg">{item.product.imagen}</div>
+                          <div className="w-10 h-10 rounded-lg bg-slate-900 flex items-center justify-center text-lg overflow-hidden">
+                            {item.product.imagen && (item.product.imagen.startsWith('data:image') || item.product.imagen.startsWith('http')) ? (
+                              <img src={item.product.imagen} alt={item.product.nombre} className="w-full h-full object-cover" />
+                            ) : (
+                              <span>{item.product.imagen || '📦'}</span>
+                            )}
+                          </div>
                           <div>
                             <p className="text-xs font-semibold text-white">{item.product.nombre}</p>
                             <p className="text-[10px] text-slate-400">Cantidad: {item.quantity}</p>
