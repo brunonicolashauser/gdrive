@@ -4,7 +4,7 @@ import {
   ShoppingCart, Package, Search, MapPin, AlertTriangle, CheckCircle, XCircle,
   Phone, MessageCircle, Settings, Plus, Trash2, Edit, Lock, Unlock,
   Smartphone, Monitor, Droplets, Ship, Zap, Activity, Navigation,
-  Percent, X, Check, Home, Wrench, Bell, ChevronRight, Camera, Upload, Image as ImageIcon, Calendar
+  Percent, X, Check, Home, Wrench, Bell, ChevronRight, Camera, Upload, Image as ImageIcon, Calendar, Mail
 } from 'lucide-react';
 
 // ==================== DATA ====================
@@ -348,6 +348,26 @@ function InicioModule({ setActive }: any) {
           </div>
           <p className="text-[10px] text-slate-400 text-center mt-2">
             Disponible por WhatsApp para atención personalizada
+          </p>
+        </div>
+        
+        {/* Solicitar Cotización por Email */}
+        <div className="bg-slate-900/50 rounded-xl p-3 border border-amber-500/20 mt-3">
+          <div className="flex items-center gap-2 mb-2">
+            <Mail size={16} className="text-amber-400" />
+            <p className="text-xs font-semibold text-white">Solicitar Cotización</p>
+          </div>
+          <p className="text-[11px] text-slate-300 mb-2">
+            Envía tu solicitud de cotización directamente a nuestro correo:
+          </p>
+          <div className="flex items-center justify-center gap-2 mt-2">
+            <Mail size={14} className="text-amber-400" />
+            <a href="mailto:contacto@gerdiver.cl" className="text-sm font-bold text-amber-400 hover:text-amber-300 transition-colors">
+              contacto@gerdiver.cl
+            </a>
+          </div>
+          <p className="text-[10px] text-slate-400 text-center mt-2">
+            Respuesta en menos de 24 horas hábiles
           </p>
         </div>
       </div>
