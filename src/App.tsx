@@ -34,10 +34,7 @@ const INITIAL_PRODUCTS = [
   { id: 8, nombre: 'Casco Kirby Morgan 48', categoria: 'Equipos', precioVenta: 3500000, stock: 3, imagen: '⛑️', descripcion: 'Casco de buceo comercial con comunicaciones.' },
 ];
 
-const INITIAL_PLANS = [
-  { id: 1, nombre: 'Plan Flota Mayorista', descuento: 25, tipo: 'venta', descripcion: 'Descuento por volumen para compras sobre 5 unidades' },
-  { id: 2, nombre: 'Plan Descuento Volumen', descuento: 10, tipo: 'venta', descripcion: '10% descuento compras sobre $500.000 CLP' },
-];
+
 
 // ==================== UTILITIES ====================
 function getRecomendacionInmersion(oleaje: number, viento: number) {
@@ -758,12 +755,10 @@ function ConversorModule() {
 
 // ==================== CATALOGO MODULE ====================
 function CatalogoModule({ cart, setCart, products }: any) {
-  const [plans] = useState(INITIAL_PLANS);
   const [search, setSearch] = useState('');
   const [catFilter, setCatFilter] = useState('Todos');
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [quantity, setQuantity] = useState(1);
-  const [selectedPlan, setSelectedPlan] = useState<any>(null);
 
   const categories = ['Todos', ...Array.from(new Set(products.map((p: any) => p.categoria)))];
   const filtered = products.filter((p: any) => {
@@ -774,15 +769,13 @@ function CatalogoModule({ cart, setCart, products }: any) {
 
   const addToCart = () => {
     if (!selectedProduct) return;
-    setCart([...cart, { product: selectedProduct, quantity, plan: selectedPlan, id: Date.now() }]);
-    setSelectedProduct(null); setQuantity(1); setSelectedPlan(null);
+    setCart([...cart, { product: selectedProduct, quantity, id: Date.now() }]);
+    setSelectedProduct(null); setQuantity(1);
   };
 
   const getPrice = () => {
     if (!selectedProduct) return 0;
-    let base = selectedProduct.precioVenta * quantity;
-    if (selectedPlan) base = base * (1 - selectedPlan.descuento / 100);
-    return Math.round(base);
+    return selectedProduct.precioVenta * quantity;
   };
 
   return (
@@ -832,20 +825,6 @@ function CatalogoModule({ cart, setCart, products }: any) {
                 </div>
               </div>
               <div>
-                <p className="text-[10px] text-slate-400 uppercase tracking-wider mb-2">Planes de Descuento</p>
-                <div className="space-y-2">
-                  {plans.filter((pl: any) => pl.tipo === 'venta').map((pl: any) => (
-                    <button key={pl.id} onClick={() => setSelectedPlan(selectedPlan?.id === pl.id ? null : pl)} className={`w-full p-3 rounded-xl text-left transition-all ${selectedPlan?.id === pl.id ? 'bg-cyan-500/10 border border-cyan-500/30' : 'bg-slate-800 border border-slate-700'}`}>
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-medium text-white">{pl.nombre}</span>
-                        <span className="text-[10px] px-2 py-0.5 bg-amber-500/20 text-amber-400 rounded-full">-{pl.descuento}%</span>
-                      </div>
-                      <p className="text-[10px] text-slate-400 mt-1">{pl.descripcion}</p>
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div>
                 <label className="text-[10px] text-slate-400">Cantidad</label>
                 <div className="flex items-center gap-2 mt-1">
                   <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="w-8 h-8 rounded-lg bg-slate-800 text-white flex items-center justify-center">-</button>
@@ -858,7 +837,6 @@ function CatalogoModule({ cart, setCart, products }: any) {
                   <span className="text-xs text-slate-400">Total</span>
                   <span className="text-xl font-bold text-emerald-400">{formatCLP(getPrice())}</span>
                 </div>
-                {selectedPlan && <p className="text-[10px] text-cyan-400 mt-1">Plan: {selectedPlan.nombre} (-{selectedPlan.descuento}%)</p>}
               </div>
               <button onClick={addToCart} className="w-full py-3 bg-gradient-to-r from-amber-500 to-amber-400 text-slate-950 font-bold rounded-xl text-sm">
                 <ShoppingCart size={16} className="inline mr-2" />Agregar al Carrito
@@ -1343,31 +1321,95 @@ function AdminModule({ products, setProducts }: any) {
 
 // ==================== CART MODAL ====================
 function CartModal({ cart, setCart, onClose }: any) {
+  const WHATSAPP_NUMBER = '56997756020';
+  const [orderConfirmed, setOrderConfirmed] = useState(false);
+  const [orderNumber, setOrderNumber] = useState('');
+
   const total = cart.reduce((sum: number, item: any) => {
-    let price = item.product.precioVenta * item.quantity;
-    if (item.plan) price = price * (1 - item.plan.descuento / 100);
+    const price = item.product.precioVenta * item.quantity;
     return sum + Math.round(price);
   }, 0);
 
+  const generateOrderNumber = () => {
+    const timestamp = Date.now().toString().slice(-6);
+    const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+    return `GERD-${timestamp}-${random}`;
+  };
+
   const sendWhatsApp = () => {
-    let msg = `🤿 *COTIZACIÓN GERDIVER CHILE*\n━━━━━━━━━━━━━━━━━━\n\n`;
+    const orderNum = generateOrderNumber();
+    setOrderNumber(orderNum);
+    
+    let msg = `🛒 *PEDIDO GERDIVER CHILE*\n`;
+    msg += `━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+    msg += `📋 *N° Orden:* ${orderNum}\n`;
+    msg += `📅 *Fecha:* ${new Date().toLocaleDateString('es-CL')}\n`;
+    msg += `⏰ *Hora:* ${new Date().toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}\n\n`;
+    msg += `*DETALLE DEL PEDIDO:*\n\n`;
+    
     cart.forEach((item: any, i: number) => {
       const price = item.product.precioVenta * item.quantity;
-      const finalPrice = item.plan ? price * (1 - item.plan.descuento / 100) : price;
-      msg += `${i + 1}. *${item.product.nombre}*\n   Cantidad: ${item.quantity}\n`;
-      if (item.plan) msg += `   Plan: ${item.plan.nombre} (-${item.plan.descuento}%)\n`;
-      msg += `   Subtotal: ${formatCLP(Math.round(finalPrice))}\n\n`;
+      msg += `${i + 1}. *${item.product.nombre}*\n`;
+      msg += `   📦 Cantidad: ${item.quantity}\n`;
+      msg += `   💰 Subtotal: ${formatCLP(Math.round(price))}\n\n`;
     });
-    msg += `━━━━━━━━━━━━━━━━━━\n💵 *TOTAL: ${formatCLP(total)} CLP*\n\n📍 Puerto Montt, Chile\n📞 +569 8889 2747`;
-    window.open(`https://wa.me/56988892747?text=${encodeURIComponent(msg)}`, '_blank');
+    
+    msg += `━━━━━━━━━━━━━━━━━━━━━━━\n`;
+    msg += `💵 *TOTAL: ${formatCLP(total)} CLP*\n\n`;
+    msg += `📍 Gerdiver Chile - Puerto Montt`;
+
+    const encoded = encodeURIComponent(msg);
+    window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encoded}`, '_blank');
+    
+    setOrderConfirmed(true);
+    setCart([]);
   };
+
+  if (orderConfirmed) {
+    return (
+      <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-end justify-center">
+        <div className="w-full max-w-[390px] bg-slate-900 rounded-t-3xl border-t border-slate-700">
+          <div className="p-6 space-y-4">
+            <div className="text-center">
+              <div className="w-20 h-20 rounded-full bg-emerald-500/20 border-2 border-emerald-400 flex items-center justify-center mx-auto mb-4">
+                <CheckCircle size={40} className="text-emerald-400" />
+              </div>
+              <h3 className="text-lg font-bold text-white mb-2">¡Pedido Confirmado!</h3>
+              <p className="text-sm text-slate-400 mb-4">Estamos procesando tu pedido</p>
+              
+              <div className="bg-slate-800 rounded-xl p-4 border border-slate-700 mb-4">
+                <p className="text-[10px] text-slate-500 uppercase tracking-wider mb-1">Número de Orden</p>
+                <p className="text-lg font-bold text-cyan-400">{orderNumber}</p>
+              </div>
+
+              <div className="bg-cyan-500/10 border border-cyan-500/30 rounded-xl p-3">
+                <p className="text-xs text-cyan-300">
+                  📱 Te llegará un mensaje por WhatsApp cuando tu pedido esté listo para retiro
+                </p>
+              </div>
+            </div>
+
+            <button 
+              onClick={() => {
+                setOrderConfirmed(false);
+                onClose();
+              }} 
+              className="w-full py-3 bg-gradient-to-r from-cyan-500 to-emerald-500 text-white font-bold rounded-xl text-sm"
+            >
+              Cerrar
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-end justify-center">
       <div className="w-full max-w-[390px] bg-slate-900 rounded-t-3xl border-t border-slate-700 max-h-[85vh] overflow-y-auto">
         <div className="p-4 space-y-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2"><ShoppingCart size={18} className="text-cyan-400" /><h3 className="text-base font-bold text-white">Cotización</h3></div>
+            <div className="flex items-center gap-2"><ShoppingCart size={18} className="text-cyan-400" /><h3 className="text-base font-bold text-white">Carrito de Compras</h3></div>
             <button onClick={onClose} className="p-1 rounded-lg bg-slate-800"><X size={16} className="text-slate-400" /></button>
           </div>
           {cart.length === 0 ? (
@@ -1377,7 +1419,6 @@ function CartModal({ cart, setCart, onClose }: any) {
               <div className="space-y-2">
                 {cart.map((item: any) => {
                   const price = item.product.precioVenta * item.quantity;
-                  const finalPrice = item.plan ? price * (1 - item.plan.descuento / 100) : price;
                   return (
                     <div key={item.id} className="bg-slate-800/50 rounded-xl p-3 border border-slate-700">
                       <div className="flex items-start justify-between">
@@ -1385,12 +1426,11 @@ function CartModal({ cart, setCart, onClose }: any) {
                           <div className="w-10 h-10 rounded-lg bg-slate-900 flex items-center justify-center text-lg">{item.product.imagen}</div>
                           <div>
                             <p className="text-xs font-semibold text-white">{item.product.nombre}</p>
-                            <p className="text-[10px] text-slate-400">💰 Compra • Cant: {item.quantity}</p>
-                            {item.plan && <p className="text-[10px] text-cyan-400">Plan: {item.plan.nombre}</p>}
+                            <p className="text-[10px] text-slate-400">Cantidad: {item.quantity}</p>
                           </div>
                         </div>
                         <div className="text-right">
-                          <p className="text-xs font-bold text-emerald-400">{formatCLP(Math.round(finalPrice))}</p>
+                          <p className="text-xs font-bold text-emerald-400">{formatCLP(Math.round(price))}</p>
                           <button onClick={() => setCart(cart.filter((i: any) => i.id !== item.id))} className="text-[10px] text-rose-400 mt-1">Eliminar</button>
                         </div>
                       </div>
@@ -1405,7 +1445,7 @@ function CartModal({ cart, setCart, onClose }: any) {
                 </div>
               </div>
               <button onClick={sendWhatsApp} className="w-full py-3.5 bg-gradient-to-r from-emerald-500 to-emerald-400 text-slate-950 font-bold rounded-xl text-sm flex items-center justify-center gap-2">
-                <MessageCircle size={18} />Enviar por WhatsApp
+                <MessageCircle size={18} />Confirmar Pedido
               </button>
             </>
           )}
