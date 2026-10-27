@@ -543,7 +543,7 @@ function InicioModule({ setActive }: any) {
                 <span className="text-sm">🌅</span>
               </div>
               <div className="flex-1">
-                <p className="text-xs font-semibold text-emerald-400 mb-1">9:00 AM - 12:00 PM</p>
+                <p className="text-xs font-semibold text-emerald-400 mb-1">9:00 AM - 12 AM</p>
                 <p className="text-[11px] text-slate-300">Los cilindros se llevan a planta <strong className="text-emerald-400">el mismo día</strong> del agendamiento</p>
               </div>
             </div>
@@ -555,7 +555,7 @@ function InicioModule({ setActive }: any) {
                 <span className="text-sm">🌙</span>
               </div>
               <div className="flex-1">
-                <p className="text-xs font-semibold text-amber-400 mb-1">Después de las 12:00 PM</p>
+                <p className="text-xs font-semibold text-amber-400 mb-1">Después de las 12 AM</p>
                 <p className="text-[11px] text-slate-300">Los cilindros se llevan a planta <strong className="text-amber-400">al día siguiente</strong> del agendamiento</p>
               </div>
             </div>
