@@ -4,7 +4,7 @@ import {
   ShoppingCart, Package, Search, MapPin, AlertTriangle, CheckCircle, XCircle,
   Phone, MessageCircle, Settings, Plus, Trash2, Edit, Lock, Unlock,
   Smartphone, Monitor, Droplets, Ship, Zap, Activity, Navigation,
-  Percent, X, Check, Home, Wrench, Bell, ChevronRight, Camera, Upload, Image as ImageIcon, Calendar, Mail, Users
+  Percent, X, Check, Home, Wrench, Bell, ChevronRight, Camera, Upload, Image as ImageIcon, Calendar, Mail, Users, Clock
 } from 'lucide-react';
 
 // ==================== DATA ====================
@@ -526,6 +526,30 @@ function InicioModule({ setActive }: any) {
           </div>
           <h2 className="text-xl font-bold text-white mb-1">Buceo Comercial & Servicios Marítimos</h2>
           <p className="text-sm text-slate-400">Puerto Montt, Chile</p>
+        </div>
+      </div>
+
+      {/* Horario de Atención */}
+      <div className="bg-gradient-to-br from-cyan-500/10 to-blue-500/10 rounded-2xl p-4 border border-cyan-500/30">
+        <div className="flex items-center gap-2 mb-3">
+          <Clock size={18} className="text-cyan-400" />
+          <h3 className="text-sm font-bold text-white">Horario de Atención</h3>
+        </div>
+        <div className="bg-slate-900/50 rounded-xl p-3 border border-cyan-500/20">
+          <div className="flex items-center justify-center gap-3">
+            <div className="text-center">
+              <p className="text-2xl font-bold text-cyan-400">9:00 AM</p>
+              <p className="text-[10px] text-slate-400">Apertura</p>
+            </div>
+            <div className="text-slate-600 text-2xl">→</div>
+            <div className="text-center">
+              <p className="text-2xl font-bold text-cyan-400">8:00 PM</p>
+              <p className="text-[10px] text-slate-400">Cierre</p>
+            </div>
+          </div>
+          <p className="text-[10px] text-slate-400 text-center mt-2">
+            Lunes a Sábado • Atención continua
+          </p>
         </div>
       </div>
 
