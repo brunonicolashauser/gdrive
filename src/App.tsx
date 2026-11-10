@@ -548,7 +548,7 @@ function InicioModule({ setActive }: any) {
             </div>
           </div>
           <p className="text-[10px] text-slate-400 text-center mt-2">
-            Lunes a Sábado • Atención continua
+            Lunes a Viernes • Atención continua
           </p>
         </div>
       </div>
